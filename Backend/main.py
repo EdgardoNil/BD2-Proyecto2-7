@@ -285,6 +285,79 @@ def agregar_resena(book_id, user_id, texto, puntuacion):
     except Exception as e:
         return {"error": str(e)}
 
+# Función para agregar libro al carrito
+def agregar_libro_al_carrito(user_id, libro_id, cantidad, precio):
+    try:
+        # Verificar la cantidad disponible del libro
+        libro = books_collection.find_one({"_id": ObjectId(libro_id)}, {"cantidad_stock": 1})
+        if not libro:
+            return {"error": "Libro no encontrado"}
+        
+        if libro["cantidad_stock"] < cantidad:
+            return {"error": "Cantidad solicitada no disponible"}
+
+        # Actualizar la cantidad de libros en stock
+        books_collection.update_one(
+            {"_id": ObjectId(libro_id)},
+            {"$inc": {"cantidad_stock": -cantidad}}
+        )
+
+        # Buscar si el libro ya está en el carrito
+        user = users_collection.find_one({"_id": ObjectId(user_id), "compras.libro_id": libro_id})
+        if user:
+            # Si el libro ya está en el carrito, actualizar la cantidad
+            users_collection.update_one(
+                {"_id": ObjectId(user_id), "compras.libro_id": libro_id},
+                {"$inc": {"compras.$.cantidad": cantidad}}
+            )
+        else:
+            # Si el libro no está en el carrito, agregarlo
+            users_collection.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$push": {"compras": {"libro_id": libro_id, "cantidad": cantidad, "precio": precio}}}
+            )
+        
+        # Verificar si quedan 0 libros en stock
+        libro_actualizado = books_collection.find_one({"_id": ObjectId(libro_id)}, {"cantidad_stock": 1})
+        if libro_actualizado["cantidad_stock"] == 0:
+            return {"message": "Libro agregado al carrito exitosamente, pero ya no quedan más libros en stock"}
+
+        return {"message": "Libro agregado al carrito exitosamente"}
+    except Exception as e:
+        return {"error": str(e)}
+
+# Función para eliminar libro del carrito
+def eliminar_libro_del_carrito(user_id, libro_id):
+    try:
+        users_collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$pull": {"compras": {"libro_id": libro_id}}}
+        )
+        return {"message": "Libro eliminado del carrito exitosamente"}
+    except Exception as e:
+        return {"error": str(e)}
+
+# Función para ver resumen del carrito
+def ver_resumen_carrito(user_id):
+    try:
+        user = users_collection.find_one({"_id": ObjectId(user_id)}, {"compras": 1, "_id": 0})
+        if user and "compras" in user:
+            compras_actualizadas = []
+            for item in user["compras"]:
+                libro = books_collection.find_one({"_id": ObjectId(item["libro_id"])}, {"titulo": 1})
+                if libro:
+                    compras_actualizadas.append({
+                        "libro_id": item["libro_id"],
+                        "nombre_libro": libro["titulo"],
+                        "cantidad": item["cantidad"],
+                        "precio": item["precio"]
+                    })
+            total = sum(item["cantidad"] * item["precio"] for item in compras_actualizadas)
+            return {"compras": compras_actualizadas, "total_a_pagar": total}
+        return {"compras": [], "total_a_pagar": 0}
+    except Exception as e:
+        return {"error": str(e)}
+
 #-----------------------------------------------------------------------------
 
 # Ruta para crear un nuevo usuario
@@ -392,6 +465,42 @@ def add_review(book_id):
         return jsonify({"error": "Faltan datos obligatorios"}), 400
 
     response = agregar_resena(book_id, user_id, texto, puntuacion)
+    return jsonify(response)
+
+# Endpoint para agregar libro al carrito
+@app.route('/cart', methods=['POST'])
+def add_book_to_cart():
+    data = request.json
+    user_id = data.get("user_id")
+    libro_id = data.get("libro_id")
+    cantidad = data.get("cantidad")
+    precio = data.get("precio")
+    response = agregar_libro_al_carrito(user_id, libro_id, cantidad, precio)
+    return jsonify(response)
+
+# Endpoint para actualizar cantidad de libro en el carrito
+@app.route('/cart', methods=['PUT'])
+def update_book_quantity_in_cart():
+    data = request.json
+    user_id = data.get("user_id")
+    libro_id = data.get("libro_id")
+    cantidad = data.get("cantidad")
+    response = actualizar_cantidad_libro_carrito(user_id, libro_id, cantidad)
+    return jsonify(response)
+
+# Endpoint para eliminar libro del carrito
+@app.route('/cart', methods=['DELETE'])
+def remove_book_from_cart():
+    data = request.json
+    user_id = data.get("user_id")
+    libro_id = data.get("libro_id")
+    response = eliminar_libro_del_carrito(user_id, libro_id)
+    return jsonify(response)
+
+# Endpoint para ver resumen del carrito
+@app.route('/cart/<string:user_id>', methods=['GET'])
+def get_cart_summary(user_id):
+    response = ver_resumen_carrito(user_id)
     return jsonify(response)
 
 if __name__ == '__main__':
