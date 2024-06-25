@@ -4,6 +4,10 @@ from pymongo import MongoClient
 from bson import ObjectId
 import os
 from dotenv import load_dotenv
+import boto3
+import base64
+from bson import ObjectId
+
 
 app = Flask(__name__)
 CORS(app)
@@ -29,12 +33,13 @@ books_collection = db.books
 #-----------------------------------------------------------------------------
 
 # Configuración de AWS S3
-#AWS_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY_ID"]
-#AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
-#AWS_REGION = os.environ["AWS_REGION"]
+AWS_ACCESS_KEY_ID = os.environ["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
+AWS_REGION = os.environ["AWS_REGION"]
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 
 # Crear un cliente de S3
-##s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, region_name=AWS_REGION)
+s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, region_name=AWS_REGION)
 #-----------------------------------------------------------------------------
 
 # Función para crear un nuevo usuario en MongoDB
@@ -72,25 +77,56 @@ def login(email, password):
             return {"tipo": "cliente", "id": str(user["_id"])}
     return None
 
-# Función para actualizar el perfil de un usuario en MongoDB
 def actualizar_perfil_usuario(user_id, data):
-    updated_data = {
-        "telefono": data.get("telefono", ""),
-        "email": data.get("email", ""),
-        "direccion": data.get("direccion", ""),
-        "tarjeta": data.get("tarjeta", "")
-    }
     try:
-        # Actualizar el perfil del usuario en la colección 'users'
-        result = users_collection.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": updated_data}
-        )
-        return result.modified_count > 0
+        if 'foto_base64' in data:
+            foto_base64 = data['foto_base64']
+            foto_binaria = base64.b64decode(foto_base64)
+            foto_filename = f"perfil/{user_id}.jpg"  # Guardar la imagen en la carpeta 'perfil'
+
+            # Subir la imagen a S3
+            s3.put_object(Body=foto_binaria, Bucket=os.getenv('S3_BUCKET_NAME'), Key=foto_filename)
+
+            # Generar URL prefirmada válida por 7 días
+            url_expiracion = 7 * 24 * 60 * 60
+            url_firmada = s3.generate_presigned_url('get_object', Params={'Bucket': os.getenv('S3_BUCKET_NAME'), 'Key': foto_filename}, ExpiresIn=url_expiracion)
+
+            # Actualizar datos del usuario en MongoDB con la URL de la foto
+            updated_data = {
+                "telefono": data.get("telefono", ""),
+                "email": data.get("email", ""),
+                "direccion": data.get("direccion", ""),
+                "tarjeta": data.get("tarjeta", ""),
+                "foto_url": url_firmada
+            }
+
+            result = users_collection.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": updated_data}
+            )
+
+            return result.modified_count > 0
+        
+        else:
+            # Si no se proporciona una foto_base64, actualizar solo los otros datos
+            updated_data = {
+                "telefono": data.get("telefono", ""),
+                "email": data.get("email", ""),
+                "direccion": data.get("direccion", ""),
+                "tarjeta": data.get("tarjeta", "")
+            }
+
+            result = users_collection.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": updated_data}
+            )
+
+            return result.modified_count > 0
+    
     except Exception as e:
         print(f"Error al actualizar perfil: {str(e)}")
         return False
-
+    
 # Función para crear un nuevo autor en MongoDB
 def crear_autor(data):
     new_author = {
@@ -358,6 +394,119 @@ def ver_resumen_carrito(user_id):
     except Exception as e:
         return {"error": str(e)}
 
+# Función para procesar el pago y vaciar el carrito
+def pagar_carrito(user_id):
+    try:
+        user = users_collection.find_one({"_id": ObjectId(user_id)}, {"compras": 1})
+        if user and "compras" in user:
+            if not user["compras"]:
+                return {"error": "El carrito está vacío"}
+
+            # Crear un nuevo pedido
+            nuevo_pedido = {
+                "items": user["compras"],
+                "estado": "en proceso",
+                "total": sum(item["cantidad"] * item["precio"] for item in user["compras"])
+            }
+
+            # Agregar el nuevo pedido al historial de pedidos del usuario
+            users_collection.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$push": {"pedidos": nuevo_pedido}, "$set": {"compras": []}}
+            )
+
+            return {"message": "Pago procesado exitosamente, su pedido está en proceso"}
+
+        return {"error": "Usuario no encontrado o carrito vacío"}
+    except Exception as e:
+        return {"error": str(e)}
+
+# Función para ver el historial de pedidos de un usuario
+def ver_historial_pedidos(user_id):
+    try:
+        user = users_collection.find_one({"_id": ObjectId(user_id)}, {"pedidos": 1, "_id": 0})
+        if user and "pedidos" in user:
+            return {"pedidos": user["pedidos"]}
+        return {"pedidos": []}
+    except Exception as e:
+        return {"error": str(e)}
+
+# Función para actualizar el estado de un pedido
+def actualizar_estado_pedido(user_id, nuevo_estado):
+    try:
+        result = users_collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"pedidos.$[pedido].estado": nuevo_estado}},
+            array_filters=[{"pedido.estado": {"$exists": True}}]
+        )
+        if result.modified_count > 0:
+            return {"message": "Estado del pedido actualizado correctamente"}
+        return {"error": "No se pudo actualizar el estado del pedido"}
+    except Exception as e:
+        return {"error": str(e)}
+
+# Función para obtener el historial de pedidos de clientes
+def obtener_historial_pedidos_clientes():
+    try:
+        # Buscar todos los usuarios con rol "cliente"
+        clientes = users_collection.find({"role": "cliente"})
+        historial = []
+        
+        for cliente in clientes:
+            nombre_cliente = f"{cliente['nombre']} {cliente['apellido']}"
+            for pedido in cliente.get("pedidos", []):
+                estado_pedido = pedido.get("estado", "")
+                libros_pedido = []
+                
+                for item in pedido.get("items", []):
+                    libro = books_collection.find_one({"_id": ObjectId(item["libro_id"])})
+                    if libro:
+                        libros_pedido.append({
+                            "titulo": libro["titulo"],
+                            "cantidad": item["cantidad"],
+                            "precio_unitario": item["precio"]
+                        })
+                
+                historial.append({
+                    "nombre_cliente": nombre_cliente,
+                    "estado_pedido": estado_pedido,
+                    "libros_pedido": libros_pedido
+                })
+        
+        return historial
+    
+    except Exception as e:
+        return {"error": str(e)}
+
+# Función para obtener el top de libros más vendidos
+def obtener_top_libros_vendidos():
+    try:
+        # Obtener todos los pedidos de todos los usuarios
+        todos_pedidos = users_collection.aggregate([
+            {"$unwind": "$pedidos"},
+            {"$unwind": "$pedidos.items"},
+            {"$group": {
+                "_id": "$pedidos.items.libro_id",
+                "total_vendidos": {"$sum": "$pedidos.items.cantidad"}
+            }},
+            {"$sort": {"total_vendidos": -1}}
+        ])
+        
+        top_libros = []
+        
+        for libro in todos_pedidos:
+            libro_data = books_collection.find_one({"_id": ObjectId(libro["_id"])})
+            if libro_data:
+                top_libros.append({
+                    "titulo": libro_data["titulo"],
+                    "total_vendidos": libro["total_vendidos"]
+                })
+        
+        return top_libros
+    
+    except Exception as e:
+        return {"error": str(e)}
+
 #-----------------------------------------------------------------------------
 
 # Ruta para crear un nuevo usuario
@@ -502,6 +651,39 @@ def remove_book_from_cart():
 def get_cart_summary(user_id):
     response = ver_resumen_carrito(user_id)
     return jsonify(response)
+
+# Endpoint para procesar el pago y vaciar el carrito
+@app.route('/checkout/<string:user_id>', methods=['POST'])
+def pagar_carrito_endpoint(user_id):
+    result = pagar_carrito(user_id)
+    return jsonify(result)
+
+# Endpoint para ver el historial de pedidos de un usuario
+@app.route('/ver_historial_pedidos/<string:user_id>', methods=['GET'])
+def ver_historial_pedidos_endpoint(user_id):
+    result = ver_historial_pedidos(user_id)
+    return jsonify(result)
+
+# Endpoint para actualizar el estado de un pedido
+@app.route('/actualizar_estado_pedido/<string:user_id>', methods=['PUT'])
+def actualizar_estado_pedido_endpoint(user_id):
+    data = request.json
+    nuevo_estado = data.get("estado")
+    result = actualizar_estado_pedido(user_id, nuevo_estado)
+    return jsonify(result)
+
+# Endpoint para obtener el historial de pedidos de clientes
+@app.route('/historial_pedidos_clientes', methods=['GET'])
+def obtener_historial_pedidos_clientes_endpoint():
+    historial = obtener_historial_pedidos_clientes()
+    return jsonify(historial)
+
+# Endpoint para obtener el top de libros más vendidos
+@app.route('/top_libros_vendidos', methods=['GET'])
+def obtener_top_libros_vendidos_endpoint():
+    top_libros = obtener_top_libros_vendidos()
+    return jsonify(top_libros)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
