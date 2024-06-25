@@ -34,7 +34,7 @@ export const LoginPage = () => {
       pass: password,
     }
 
-    login('Sebastian Martínez', 2, 1);
+    login('Sebastian Martínez', 1, 1);
 
     // const respuesta = await loginHelper(dataLogin);
     // console.log(respuesta);

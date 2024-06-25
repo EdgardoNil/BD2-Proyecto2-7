@@ -5,7 +5,7 @@ import { useContext } from 'react';
 import { AuthContext } from '../../auth';
 import { ProtectedRoute } from '../../router/ProtectedRoute';
 import { AuthorsAdmin, BooksAdmin, OrdersAdmin, ReportsAdmin } from '../admin';
-import { Authors, Books, Record, Cart, Profile } from '../user';
+import { Authors, Books, Record, Cart, Profile, Author, Book } from '../user';
 
 const navigationUser = [
     { name: 'Autores', href: '/authors', current: false },
@@ -101,6 +101,20 @@ export const PageRoutes = {
             element:
                 <ProtectedRoute requiredRole={1}>
                     <Profile />
+                </ProtectedRoute>
+        },
+        {
+            path: "/author/:idAutor",
+            element:
+                <ProtectedRoute requiredRole={1}>
+                    <Author />
+                </ProtectedRoute>
+        },
+        {
+            path: "/book/:idLibro",
+            element:
+                <ProtectedRoute requiredRole={1}>
+                    <Book />
                 </ProtectedRoute>
         },
         {
