@@ -9,11 +9,11 @@ export const ProtectedRoute = ({ children, requiredRole }) => {
     useEffect(() => {
         if (!user || user.type !== requiredRole) {
             if (user.type === 2) {
-                navigate('/home-admin', {
+                navigate('/authors-admin', {
                     replace: true
                 });
             } else if (user.type === 1) {
-                navigate('/home-user', {
+                navigate('/authors', {
                     replace: true
                 });
             }

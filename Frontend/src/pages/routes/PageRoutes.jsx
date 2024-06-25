@@ -4,15 +4,22 @@ import { PrivateRoute } from '../../router/PrivateRoute';
 import { useContext } from 'react';
 import { AuthContext } from '../../auth';
 import { ProtectedRoute } from '../../router/ProtectedRoute';
-import { HomeAdmin } from '../admin';
-import { HomeUser } from '../user';
+import { AuthorsAdmin, BooksAdmin, OrdersAdmin, ReportsAdmin } from '../admin';
+import { Authors, Books, Record, Cart, Profile } from '../user';
 
 const navigationUser = [
-    { name: 'User', href: '/home-page', current: false },
-  ];
+    { name: 'Autores', href: '/authors', current: false },
+    { name: 'Libros', href: '/books', current: false },
+    { name: 'Mis Pedidos', href: '/record', current: false },
+    { name: 'Carrito de Compras', href: '/cart', current: false },
+    { name: 'Ver Perfil', href: '/my-profile', current: false }
+];
 
 const navigationAdmin = [
-    { name: 'Admin', href: '/appointment-management', current: false },
+    { name: 'Gestión de Autores', href: '/authors-admin', current: false },
+    { name: 'Gestión de Libros', href: '/books-admin', current: false },
+    { name: 'Pedidos', href: '/orders-admin', current: false },
+    { name: 'Reportes', href: '/reports-admin', current: false }
 ];
 
 const PageRoutesComponent = () => {
@@ -20,8 +27,8 @@ const PageRoutesComponent = () => {
 
     return (
         <PrivateRoute>
-            <Navbar 
-                navigation={user?.type === 2 ? navigationAdmin : navigationUser} 
+            <Navbar
+                navigation={user?.type === 2 ? navigationAdmin : navigationUser}
             />
         </PrivateRoute>
     );
@@ -33,25 +40,73 @@ export const PageRoutes = {
     element: <PageRoutesComponent />,
     children: [
         {
-            path: "home-admin",
-            element: (
+            path: "/authors-admin",
+            element:
                 <ProtectedRoute requiredRole={2}>
-                    <HomeAdmin />,
+                    <AuthorsAdmin />
                 </ProtectedRoute>
-            )
         },
         {
-            path: "home-user",
-            element: (
-                <ProtectedRoute requiredRole={1}>
-                    <HomeUser />,
+            path: "/books-admin",
+            element:
+                <ProtectedRoute requiredRole={2}>
+                    <BooksAdmin />
                 </ProtectedRoute>
-            )
+
+        },
+        {
+            path: "/orders-admin",
+            element:
+                <ProtectedRoute requiredRole={2}>
+                    <OrdersAdmin />
+                </ProtectedRoute>
+        },
+        {
+            path: "/reports-admin",
+            element:
+                <ProtectedRoute requiredRole={2}>
+                    <ReportsAdmin />
+                </ProtectedRoute>
+        },
+        {
+            path: "/authors",
+            element:
+                <ProtectedRoute requiredRole={1}>
+                    <Authors />
+                </ProtectedRoute>
+        },
+        {
+            path: "/books",
+            element:
+                <ProtectedRoute requiredRole={1}>
+                    <Books />
+                </ProtectedRoute>
+        },
+        {
+            path: "/record",
+            element:
+                <ProtectedRoute requiredRole={1}>
+                    <Record />
+                </ProtectedRoute>
+        },
+        {
+            path: "/cart",
+            element:
+                <ProtectedRoute requiredRole={1}>
+                    <Cart />
+                </ProtectedRoute>
+        },
+        {
+            path: "/my-profile",
+            element:
+                <ProtectedRoute requiredRole={1}>
+                    <Profile />
+                </ProtectedRoute>
         },
         {
             // path: "/*",
             path: "/",
-            element: <ProtectedRoute requiredRole={0}/>,
+            element: <ProtectedRoute requiredRole={0} />,
         },
     ]
 }
