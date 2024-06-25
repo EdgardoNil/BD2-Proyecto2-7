@@ -77,6 +77,24 @@ def login(email, password):
             return {"tipo": "cliente", "id": str(user["_id"])}
     return None
 
+# Función para obtener la información específica de un usuario por su ID
+def obtener_usuario_por_id(user_id):
+    try:
+        # Buscar el usuario en la colección 'users' por su ID
+        user = users_collection.find_one(
+            {"_id": ObjectId(user_id)},
+            {"nombre": 1,"foto_url": 1}
+        )
+        if user:
+            # Convertir el ObjectId a string para que sea serializable
+            user["_id"] = str(user["_id"])
+            return user
+        else:
+            return {"error": "Usuario no encontrado"}
+    except Exception as e:
+        return {"error": str(e)}
+
+# Función para actualizar el perfil de un usuario en MongoDB
 def actualizar_perfil_usuario(user_id, data):
     try:
         if 'foto_base64' in data:
@@ -96,7 +114,6 @@ def actualizar_perfil_usuario(user_id, data):
                 "telefono": data.get("telefono", ""),
                 "email": data.get("email", ""),
                 "direccion": data.get("direccion", ""),
-                "tarjeta": data.get("tarjeta", ""),
                 "foto_url": url_firmada
             }
 
@@ -113,7 +130,6 @@ def actualizar_perfil_usuario(user_id, data):
                 "telefono": data.get("telefono", ""),
                 "email": data.get("email", ""),
                 "direccion": data.get("direccion", ""),
-                "tarjeta": data.get("tarjeta", "")
             }
 
             result = users_collection.update_one(
@@ -129,17 +145,38 @@ def actualizar_perfil_usuario(user_id, data):
     
 # Función para crear un nuevo autor en MongoDB
 def crear_autor(data):
-    new_author = {
-        "nombre": data.get("nombre", ""),
-        "biografia": data.get("biografia", ""),
-        "foto": data.get("foto", ""),
-        "libros": data.get("libros", [])
-    }
     try:
-        # Insertar el nuevo autor en la colección 'authors'
+        # Crear el nuevo autor sin la URL de la foto (se añadirá después de subir la foto a S3)
+        new_author = {
+            "nombre": data.get("nombre", ""),
+            "biografia": data.get("biografia", ""),
+            "libros": data.get("libros", [])
+        }
+
+        # Insertar el nuevo autor en la colección 'authors' y obtener el ID insertado
         result = authors_collection.insert_one(new_author)
         inserted_id = str(result.inserted_id)
-        return {"message": "Autor creado exitosamente"}
+
+        # Decodificar la imagen Base64 y subirla a S3 si se proporciona
+        if 'foto_base64' in data:
+            foto_base64 = data['foto_base64']
+            foto_binaria = base64.b64decode(foto_base64)
+            foto_filename = f"authors/{inserted_id}.jpg"  # Guardar la imagen en la carpeta 'authors' con el ID del autor
+
+            # Subir la imagen a S3
+            s3.put_object(Body=foto_binaria, Bucket=os.getenv('S3_BUCKET_NAME'), Key=foto_filename)
+
+            # Generar URL prefirmada válida por 7 días
+            url_expiracion = 7 * 24 * 60 * 60
+            url_firmada = s3.generate_presigned_url('get_object', Params={'Bucket': os.getenv('S3_BUCKET_NAME'), 'Key': foto_filename}, ExpiresIn=url_expiracion)
+
+            # Actualizar el autor con la URL de la foto en la colección 'authors'
+            authors_collection.update_one(
+                {"_id": ObjectId(inserted_id)},
+                {"$set": {"foto_url": url_firmada}}
+            )
+
+        return {"message": "Autor creado exitosamente", "author_id": inserted_id}
     except Exception as e:
         return {"error": str(e)}
 
@@ -196,7 +233,7 @@ def agregar_libro(data):
         "cantidad_stock": data.get("cantidad_stock", 0),
         "puntuacion_promedio": data.get("puntuacion_promedio", 0.0),
         "precio": data.get("precio", 0.0),
-        "imagen_url": data.get("imagen_url", ""),
+        "imagen_url": "",
         "resenas": data.get("reseñas", [])
     }
     try:
@@ -204,12 +241,32 @@ def agregar_libro(data):
         result = books_collection.insert_one(new_book)
         book_id = str(result.inserted_id)
         
+        # Decodificar la imagen Base64 y subirla a S3 si se proporciona
+        if 'foto_base64' in data:
+            foto_base64 = data['foto_base64']
+            foto_binaria = base64.b64decode(foto_base64)
+            foto_filename = f"books/{book_id}.jpg"  # Guardar la imagen en la carpeta 'books' con el ID del libro
+
+            # Subir la imagen a S3
+            s3.put_object(Body=foto_binaria, Bucket=os.getenv('S3_BUCKET_NAME'), Key=foto_filename)
+
+            # Generar URL prefirmada válida por 7 días
+            url_expiracion = 7 * 24 * 60 * 60
+            url_firmada = s3.generate_presigned_url('get_object', Params={'Bucket': os.getenv('S3_BUCKET_NAME'), 'Key': foto_filename}, ExpiresIn=url_expiracion)
+
+            # Actualizar el libro con la URL de la foto en la colección 'books'
+            books_collection.update_one(
+                {"_id": ObjectId(book_id)},
+                {"$set": {"imagen_url": url_firmada}}
+            )
+
         # Actualizar la lista de libros del autor usando el ID del autor
         authors_collection.update_one(
             {"_id": ObjectId(author_id)},
             {"$push": {"libros": book_id}}
         )
-        return {"message": "Libro agregado exitosamente"}
+
+        return {"message": "Libro agregado exitosamente", "book_id": book_id}
     except Exception as e:
         return {"error": str(e)}
 
@@ -530,6 +587,14 @@ def login_user():
         return jsonify(result)
     else:
         return jsonify({"error": "Credenciales inválidas"}), 401
+
+# Ruta para obtener la información completa de un usuario por su ID
+@app.route('/users/<string:user_id>', methods=['GET'])
+def obtener_usuario(user_id):
+    resultado = obtener_usuario_por_id(user_id)
+    if "error" in resultado:
+        return jsonify(resultado), 404
+    return jsonify(resultado), 200
 
 # Ruta para actualizar el perfil de un usuario
 @app.route('/users/<string:user_id>', methods=['PUT'])
