@@ -1,0 +1,89 @@
+/* .background-radial-gradient {
+    background-color: hsl(42, 60%, 90%);
+    background-image: radial-gradient(650px circle at 0% 0%,
+        hsl(42, 60%, 90%) 15%,
+        hsl(42.162, 70%, 90%) 35%,
+        hsl(41.887, 77%, 87%) 75%,
+        hsl(42.254, 90%, 85%) 80%,
+        transparent 100%),
+      radial-gradient(1250px circle at 100% 100%,
+      hsl(42, 60%, 90%) 15%,
+      hsl(42.162, 70%, 90%) 35%,
+      hsl(41.887, 77%, 87%) 75%,
+      hsl(42.254, 90%, 85%) 80%,
+        transparent 100%);
+  } */
+  
+  #radius-shape-1 {
+    height: 220px;
+    width: 220px;
+    top: -60px;
+    left: -130px;
+    background: radial-gradient(#24613b, #52F38F);
+    overflow: hidden;
+  }
+  
+  #radius-shape-2 {
+    border-radius: 38% 62% 63% 37% / 70% 33% 67% 30%;
+    bottom: -60px;
+    right: -110px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(#E58700, #FBC67A);
+    overflow: hidden;
+  }
+  
+  .bg-glass {
+    background-color: hsl(210, 29%, 29%) !important;
+    backdrop-filter: saturate(200%) blur(25px);
+    color: white;
+  }
+  
+  .link {
+    color: #393f81;
+    text-decoration: none;
+    text-decoration: underline;
+  }
+  
+  .link:hover {
+    color: #0000EE;
+    cursor: pointer;
+  }
+
+  .link-two {
+    color: #ECF0F1;
+    text-decoration: none;
+    text-decoration: underline;
+  }
+  
+  .link-two:hover {
+    color: #B3B6B7;
+    cursor: pointer;
+  }
+  
+  .icon-facebook {
+    color: #3b5998;
+  }
+  
+  .icon-google {
+    color: #db4437;
+  }
+  
+  .icon-twitter {
+    color: #1da1f2;
+  }
+  
+  .icon-github {
+    color: #333;
+  }
+
+  /* hsl(218, 41%, 35%) 15%,
+  hsl(218, 41%, 30%) 35%,
+  hsl(218, 41%, 20%) 75%,
+  hsl(218, 41%, 19%) 80%,
+  transparent 100%),
+radial-gradient(1250px circle at 100% 100%,
+  hsl(218, 41%, 45%) 15%,
+  hsl(218, 41%, 30%) 35%,
+  hsl(218, 41%, 20%) 75%,
+  hsl(218, 41%, 19%) 80%, */
