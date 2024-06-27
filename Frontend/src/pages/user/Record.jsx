@@ -11,19 +11,33 @@ export const Record = () => {
       .then((response) => response.json())
       .then((data) => {
         console.log(data); // Log de la respuesta
-        setAppointments(data.pedidos);
+        if (Array.isArray(data)) {
+          setAppointments(data); // Establecer appointments si data es un array válido
+        } else {
+          console.error('Datos no válidos recibidos:', data);
+        }
+      })
+      .catch((error) => {
+        console.error('Error al obtener el historial de pedidos:', error);
       });
   }, [user]);
 
   const handleEntregarPedido = async (pedidoId) => {
     try {
       console.log('Pedido ID:', pedidoId); // Log del ID del pedido antes de enviarlo
+  
       const response = await fetch(`http://localhost:5000/actualizar_estado_pedido/${pedidoId}`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json' // Asegúrate de especificar el tipo de contenido como JSON
+        },
+        body: JSON.stringify({ estado: 'entregado' }) // Envía el objeto con el nuevo estado del pedido
       });
+  
       if (!response.ok) {
         throw new Error('Error al entregar el pedido');
       }
+  
       // Actualizar el estado del pedido localmente
       const updatedAppointments = appointments.map(appointment => {
         if (appointment._id === pedidoId) {
@@ -36,6 +50,7 @@ export const Record = () => {
       console.error('Error al entregar el pedido:', error);
     }
   };
+  
 
   return (
     <>
@@ -57,7 +72,7 @@ export const Record = () => {
                 {appointments.map((appointment, index) => (
                   <tr key={index}>
                     <td className="px-6 py-4">{appointment.estado}</td>
-                    <td className="px-6 py-4">{appointment.items.length}</td>
+                    <td className="px-6 py-4">{appointment.libros_pedido.length}</td>
                     <td className="px-6 py-4">{appointment.total}</td>
                     <td className="px-6 py-4">
                       {appointment.estado === 'en proceso' && (
