@@ -336,27 +336,16 @@ def obtener_book(book_id):
     except Exception as e:
         return {"error": str(e)}
 
-# Función para buscar 
+# Función para buscar libros por título o autor
 def buscar_entidad(params):
     termino_busqueda = params.get('buscar')
 
     if termino_busqueda:
-        # Buscar en la colección 'authors' por nombre
-        query_authors = {
-            "nombre": {'$regex': termino_busqueda, '$options': 'i'}
-        }
-        try:
-            autores = list(authors_collection.find(query_authors))
-            if autores:
-                for autor in autores:
-                    autor["_id"] = str(autor["_id"])
-                return autores
-        except Exception as e:
-            return {"error": str(e)}
-
-        # Buscar en la colección 'books' por título
         query_books = {
-            "titulo": {'$regex': termino_busqueda, '$options': 'i'}
+            "$or": [
+                {"titulo": {'$regex': termino_busqueda, '$options': 'i'}},
+                {"autor": {'$regex': termino_busqueda, '$options': 'i'}}
+            ]
         }
         try:
             libros = list(books_collection.find(query_books))
@@ -364,11 +353,13 @@ def buscar_entidad(params):
                 for libro in libros:
                     libro["_id"] = str(libro["_id"])
                 return libros
+            else:
+                return {"message": "No se encontraron libros para la búsqueda."}
         except Exception as e:
             return {"error": str(e)}
+    else:
+        return {"error": "No se proporcionó un término de búsqueda."}
 
-    # Si no se encontraron resultados en ninguna colección
-    return {"message": "No se encontraron resultados para la búsqueda."}
 
 # Función para filtrar libros por género, precio o puntuación
 def filtrar_libros_por(params):
