@@ -579,14 +579,43 @@ def actualizar_cantidad_libro_carrito(user_id, libro_id, cantidad):
     except Exception as e:
         return {"error": str(e)}
 
-# Función para eliminar libro del carrito
+# Función para eliminar libro del carrito y actualizar el stock del libro
 def eliminar_libro_del_carrito(user_id, libro_id):
     try:
+        # Buscar el usuario y el libro en el carrito
+        user = users_collection.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            return {"error": "Usuario no encontrado"}
+
+        libro_a_eliminar = None
+        for libro in user.get("compras", []):
+            if libro["libro_id"] == libro_id:
+                libro_a_eliminar = libro
+                break
+        
+        if not libro_a_eliminar:
+            return {"error": "Libro no encontrado en el carrito"}
+
+        # Obtener la cantidad del libro a eliminar
+        cantidad_eliminar = libro_a_eliminar.get("cantidad", 0)
+
+        # Actualizar la colección de usuarios para eliminar el libro del carrito
         users_collection.update_one(
             {"_id": ObjectId(user_id)},
             {"$pull": {"compras": {"libro_id": libro_id}}}
         )
-        return {"message": "Libro eliminado del carrito exitosamente"}
+
+        # Actualizar el stock del libro en la colección de books
+        result = books_collection.update_one(
+            {"_id": ObjectId(libro_id)},
+            {"$inc": {"cantidad_stock": cantidad_eliminar}}
+        )
+
+        if result.modified_count > 0:
+            return {"message": "Libro eliminado del carrito exitosamente y stock actualizado"}
+        else:
+            return {"error": "No se pudo actualizar el stock del libro"}
+
     except Exception as e:
         return {"error": str(e)}
 
