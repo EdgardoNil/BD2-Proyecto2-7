@@ -7,37 +7,58 @@ import { useModal } from './context/ModalContext';
 import { ModalDelete } from './components/ModalDelete';
 import { getAuthors } from './helpers';
 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 export const AuthorsAdmin = () => {
   const navigate = useNavigate();
   const { openModal, openModalDeletedAuthor } = useModal();
   const { user } = useContext(AuthContext);
+
+  const notifySuccess = (message) => toast.success(message);
+  const notifyError = (message) => toast.error(message);
 
   const [autores, setAutores] = useState([])
 
   const fetchData = async () => {
 
     const respuesta = await getAuthors();
-    console.log(respuesta);
+    // console.log(respuesta);
     setAutores(respuesta);
-    
+
   }
 
   useEffect(() => {
     fetchData();
   }, [])
-  
+
 
   const handleVerAutor = (autorID) => {
     navigate(`/author/${autorID}`);
   }
 
-  const onAddAuthor = (newAuthor) => {
+  const onAddAuthor = (newAuthor, respuesta) => {
     setAutores([newAuthor, ...autores]);
+    if (respuesta.message) {
+      notifySuccess(respuesta.message);
+    } else if (respuesta.error) {
+      notifyError(respuesta.error);
+    } else {
+      notifyError("Error interno en el servidor");
+    }
   }
 
-  const onDeleteAuthor = (authorId) => {
+  const onDeleteAuthor = (authorId, respuesta) => {
     console.log("Desde onDeleteAuthor");
     setAutores(autores.filter(author => author._id !== authorId));
+
+    if (respuesta.message) {
+      notifySuccess(respuesta.message);
+    } else if (respuesta.error) {
+      notifyError(respuesta.error);
+    } else {
+      notifyError("Error interno en el servidor");
+    }
   }
 
   return (
@@ -100,10 +121,16 @@ export const AuthorsAdmin = () => {
         </button>
       </div>
       <ModalSaveClose
-        onNewAuthor={(value) => onAddAuthor(value)}
+        onNewAuthor={(value, respuesta) => onAddAuthor(value, respuesta)}
       />
       <ModalDelete
-        onRemoveAuthor={(value) => onDeleteAuthor(value)}
+        onRemoveAuthor={(value, respuesta) => onDeleteAuthor(value, respuesta)}
+      />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={3000}
+        pauseOnHover
+        theme="colored"
       />
     </>
   )
