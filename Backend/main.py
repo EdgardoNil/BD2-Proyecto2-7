@@ -380,7 +380,7 @@ def filtrar_libros_por(params):
             "genero": {"$exists": True}
         }
         try:
-            libros = list(books_collection.find(query).sort("titulo", 1))
+            libros = list(books_collection.find(query).sort("genero", 1))
             if libros:
                 for libro in libros:
                     libro["_id"] = str(libro["_id"])
