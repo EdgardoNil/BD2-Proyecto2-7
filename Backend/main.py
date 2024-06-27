@@ -57,7 +57,8 @@ def crear_usuario(data):
         "fecha_registro": data.get("fecha_registro", ""),
         "role": data.get("role", "cliente"), 
         "password": data.get("password", ""),
-        "compras": data.get("compras", [])
+        "compras": data.get("compras", []),
+        "id_usuario": str(cliente["_id"])
     }
     try:
         # Insertar el nuevo usuario en la colección 'users'
@@ -713,7 +714,8 @@ def obtener_historial_pedidos_clientes():
                 historial.append({
                     "nombre_cliente": nombre_cliente,
                     "estado_pedido": estado_pedido,
-                    "libros_pedido": libros_pedido
+                    "libros_pedido": libros_pedido,
+                    "id_usuario": str(cliente["_id"]),
                 })
         
         return historial
