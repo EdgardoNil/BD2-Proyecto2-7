@@ -58,7 +58,7 @@ def crear_usuario(data):
         "role": data.get("role", "cliente"), 
         "password": data.get("password", ""),
         "compras": data.get("compras", []),
-        "id_usuario": str(cliente["_id"])
+        "foto_url": "https://p2-db2-g7.s3.us-east-2.amazonaws.com/perfil/perfil.jpg"
     }
     try:
         # Insertar el nuevo usuario en la colección 'users'
