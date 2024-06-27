@@ -4,13 +4,17 @@ export const OrdersAdmin = () => {
   const [salesData, setSalesData] = useState([]);
   const [expandedSale, setExpandedSale] = useState(null);
 
-  useEffect(() => {
+  const fetchSalesData = () => {
     fetch('http://localhost:5000/historial_pedidos_clientes')
       .then(response => response.json())
       .then(data => setSalesData(data))
-      .catch(error => console.error('Error fetching data:', error));
+      .catch(error => console.error('Error al obtener historial:', error));
+  };
+
+  useEffect(() => {
+    fetchSalesData();
   }, []);
-  const handleRowClick = (saleId) => {
+  const handlleexpandRow = (saleId) => {
     if (expandedSale === saleId) {
       setExpandedSale(null); 
     } else {
@@ -30,6 +34,7 @@ export const OrdersAdmin = () => {
     .then(response => response.json())
     .then(data => {
       console.log('Estado actualizado:', data);
+      fetchSalesData();
     
     })
     .catch(error => {
@@ -52,7 +57,7 @@ export const OrdersAdmin = () => {
       <tbody>
         {salesData.map((sale, index) => (
           <React.Fragment key={index}>
-            <tr onClick={() => handleRowClick(index)} style={{ cursor: 'pointer', borderBottom: '1px solid #ddd' }}>
+            <tr onClick={() => handlleexpandRow(index)} style={{ cursor: 'pointer', borderBottom: '1px solid #ddd' }}>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{`compra ${index + 1}`}</td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{sale.nombre_cliente}</td>
             </tr>
@@ -69,7 +74,8 @@ export const OrdersAdmin = () => {
                 </td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>
 
-                  <button style={{ marginBottom: '5px', backgroundColor: '#3498db', color: '#fff', border: '1px solid #2980b9' }} className="status-button" onClick={() => handleChangeStatus("enviado", sale.id_usuario)}>Enviado</button>
+                  <button style={{ marginBottom: '5px', backgroundColor: '#3498db', color: '#fff', border: '1px solid #2980b9',borderRadius: '12px', // Añadir esta línea para hacer el botón más redondeado
+    padding: '8px 16px' }} className="status-button" onClick={() => handleChangeStatus("enviado", sale.id_pedido)}>Enviado</button>
                 </td>
               </tr>
             )}
