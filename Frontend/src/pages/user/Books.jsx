@@ -120,7 +120,7 @@ export const Books = () => {
                 Precio (Menor a Mayor)
               </option>
               <option key="3" value="puntuacion">
-                Puntuación
+                Puntuación (Menor a Mayor)
               </option>
             </select>
             <button
@@ -162,6 +162,12 @@ export const Books = () => {
               <label className="text-xl font-bold mr-2">Precio:</label>
               <h1 className="text-xl">
                 {libro.precio}
+              </h1>
+            </div>
+            <div className="flex ">
+              <label className="text-xl font-bold mr-2">Puntuación:</label>
+              <h1 className="text-xl">
+                {libro.puntuacion_promedio}
               </h1>
             </div>
             <div className="flex items-center justify-center gap-4">
