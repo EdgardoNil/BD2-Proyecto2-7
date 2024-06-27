@@ -336,27 +336,16 @@ def obtener_book(book_id):
     except Exception as e:
         return {"error": str(e)}
 
-# Función para buscar 
+# Función para buscar libros por título o autor
 def buscar_entidad(params):
     termino_busqueda = params.get('buscar')
 
     if termino_busqueda:
-        # Buscar en la colección 'authors' por nombre
-        query_authors = {
-            "nombre": {'$regex': termino_busqueda, '$options': 'i'}
-        }
-        try:
-            autores = list(authors_collection.find(query_authors))
-            if autores:
-                for autor in autores:
-                    autor["_id"] = str(autor["_id"])
-                return autores
-        except Exception as e:
-            return {"error": str(e)}
-
-        # Buscar en la colección 'books' por título
         query_books = {
-            "titulo": {'$regex': termino_busqueda, '$options': 'i'}
+            "$or": [
+                {"titulo": {'$regex': termino_busqueda, '$options': 'i'}},
+                {"autor": {'$regex': termino_busqueda, '$options': 'i'}}
+            ]
         }
         try:
             libros = list(books_collection.find(query_books))
@@ -364,11 +353,13 @@ def buscar_entidad(params):
                 for libro in libros:
                     libro["_id"] = str(libro["_id"])
                 return libros
+            else:
+                return {"message": "No se encontraron libros para la búsqueda."}
         except Exception as e:
             return {"error": str(e)}
+    else:
+        return {"error": "No se proporcionó un término de búsqueda."}
 
-    # Si no se encontraron resultados en ninguna colección
-    return {"message": "No se encontraron resultados para la búsqueda."}
 
 # Función para filtrar libros por género, precio o puntuación
 def filtrar_libros_por(params):
@@ -380,7 +371,7 @@ def filtrar_libros_por(params):
             "genero": {"$exists": True}
         }
         try:
-            libros = list(books_collection.find(query).sort("titulo", 1))
+            libros = list(books_collection.find(query).sort("genero", 1))
             if libros:
                 for libro in libros:
                     libro["_id"] = str(libro["_id"])
@@ -579,14 +570,43 @@ def actualizar_cantidad_libro_carrito(user_id, libro_id, cantidad):
     except Exception as e:
         return {"error": str(e)}
 
-# Función para eliminar libro del carrito
+# Función para eliminar libro del carrito y actualizar el stock del libro
 def eliminar_libro_del_carrito(user_id, libro_id):
     try:
+        # Buscar el usuario y el libro en el carrito
+        user = users_collection.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            return {"error": "Usuario no encontrado"}
+
+        libro_a_eliminar = None
+        for libro in user.get("compras", []):
+            if libro["libro_id"] == libro_id:
+                libro_a_eliminar = libro
+                break
+        
+        if not libro_a_eliminar:
+            return {"error": "Libro no encontrado en el carrito"}
+
+        # Obtener la cantidad del libro a eliminar
+        cantidad_eliminar = libro_a_eliminar.get("cantidad", 0)
+
+        # Actualizar la colección de usuarios para eliminar el libro del carrito
         users_collection.update_one(
             {"_id": ObjectId(user_id)},
             {"$pull": {"compras": {"libro_id": libro_id}}}
         )
-        return {"message": "Libro eliminado del carrito exitosamente"}
+
+        # Actualizar el stock del libro en la colección de books
+        result = books_collection.update_one(
+            {"_id": ObjectId(libro_id)},
+            {"$inc": {"cantidad_stock": cantidad_eliminar}}
+        )
+
+        if result.modified_count > 0:
+            return {"message": "Libro eliminado del carrito exitosamente y stock actualizado"}
+        else:
+            return {"error": "No se pudo actualizar el stock del libro"}
+
     except Exception as e:
         return {"error": str(e)}
 
