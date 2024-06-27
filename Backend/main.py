@@ -30,6 +30,9 @@ authors_collection = db.authors
 
 # Colección 'books' en MongoDB
 books_collection = db.books
+
+# Colección 'orders' en MongoDB
+orders_collection = db.orders
 #-----------------------------------------------------------------------------
 
 # Configuración de AWS S3
@@ -648,15 +651,19 @@ def pagar_carrito(user_id):
 
             # Crear un nuevo pedido
             nuevo_pedido = {
+                "user_id": ObjectId(user_id),
                 "items": user["compras"],
                 "estado": "en proceso",
-                "total": sum(item["cantidad"] * item["precio"] for item in user["compras"])
+                "total": sum(item["cantidad"] * item["precio"] for item in user["compras"]),
             }
 
-            # Agregar el nuevo pedido al historial de pedidos del usuario
+            # Insertar el nuevo pedido en la colección 'orders'
+            orders_collection.insert_one(nuevo_pedido)
+
+            # Vaciar el carrito de compras del usuario
             users_collection.update_one(
                 {"_id": ObjectId(user_id)},
-                {"$push": {"pedidos": nuevo_pedido}, "$set": {"compras": []}}
+                {"$set": {"compras": []}}
             )
 
             return {"message": "Pago procesado exitosamente, su pedido está en proceso"}
@@ -668,20 +675,56 @@ def pagar_carrito(user_id):
 # Función para ver el historial de pedidos de un usuario
 def ver_historial_pedidos(user_id):
     try:
-        user = users_collection.find_one({"_id": ObjectId(user_id)}, {"pedidos": 1, "_id": 0})
-        if user and "pedidos" in user:
-            return {"pedidos": user["pedidos"]}
-        return {"pedidos": []}
+        # Buscar todos los pedidos del usuario en la colección 'orders'
+        pedidos = list(orders_collection.find({"user_id": ObjectId(user_id)}))
+        historial_pedidos = []
+
+        if pedidos:
+            for pedido in pedidos:
+                pedido_info = {
+                    "_id": str(pedido["_id"]),
+                    "estado": pedido["estado"],
+                    "libros_pedido": [],
+                    "total": pedido["total"],
+                    "user_id": str(pedido["user_id"])
+                }
+
+                # Obtener información completa de cada libro en el pedido
+                for item in pedido["items"]:
+                    libro_id = item["libro_id"]
+                    libro = books_collection.find_one({"_id": ObjectId(libro_id)})
+                    if libro:
+                        item_data = {
+                            "cantidad": item["cantidad"],
+                            "libro_id": libro_id,
+                            "precio": item["precio"],
+                            "titulo": libro["titulo"]
+                        }
+                        pedido_info["libros_pedido"].append(item_data)
+                    else:
+                        item_data = {
+                            "cantidad": item["cantidad"],
+                            "libro_id": libro_id,
+                            "precio": item["precio"],
+                            "titulo": "Libro no encontrado"
+                        }
+                        pedido_info["libros_pedido"].append(item_data)
+
+                historial_pedidos.append(pedido_info)
+
+            return historial_pedidos
+        
+        return []
+    
     except Exception as e:
         return {"error": str(e)}
 
 # Función para actualizar el estado de un pedido
-def actualizar_estado_pedido(user_id, nuevo_estado):
+def actualizar_estado_pedido(pedido_id, nuevo_estado):
     try:
-        result = users_collection.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": {"pedidos.$[pedido].estado": nuevo_estado}},
-            array_filters=[{"pedido.estado": {"$exists": True}}]
+        result = orders_collection.update_one(
+            {"_id": ObjectId(pedido_id)},
+            {"$set": {"estado": nuevo_estado}}
         )
         if result.modified_count > 0:
             return {"message": "Estado del pedido actualizado correctamente"}
@@ -692,16 +735,19 @@ def actualizar_estado_pedido(user_id, nuevo_estado):
 # Función para obtener el historial de pedidos de clientes
 def obtener_historial_pedidos_clientes():
     try:
-        # Buscar todos los usuarios con rol "cliente"
-        clientes = users_collection.find({"role": "cliente"})
+        # Buscar todos los pedidos en la colección 'orders'
+        pedidos = list(orders_collection.find({}))
         historial = []
-        
-        for cliente in clientes:
-            nombre_cliente = f"{cliente['nombre']} {cliente['apellido']}"
-            for pedido in cliente.get("pedidos", []):
-                estado_pedido = pedido.get("estado", "")
+
+        for pedido in pedidos:
+            # Obtener el nombre del cliente usando user_id del pedido
+            user_id = pedido.get("user_id")
+            cliente = users_collection.find_one({"_id": ObjectId(user_id)})
+
+            if cliente:
+                nombre_cliente = f"{cliente['nombre']} {cliente['apellido']}"
                 libros_pedido = []
-                
+
                 for item in pedido.get("items", []):
                     libro = books_collection.find_one({"_id": ObjectId(item["libro_id"])})
                     if libro:
@@ -710,29 +756,29 @@ def obtener_historial_pedidos_clientes():
                             "cantidad": item["cantidad"],
                             "precio_unitario": item["precio"]
                         })
-                
+
                 historial.append({
                     "nombre_cliente": nombre_cliente,
-                    "estado_pedido": estado_pedido,
+                    "estado_pedido": pedido["estado"],
                     "libros_pedido": libros_pedido,
                     "id_usuario": str(cliente["_id"]),
+                    "id_pedido": str(pedido["_id"]),
                 })
-        
+
         return historial
-    
+
     except Exception as e:
         return {"error": str(e)}
 
 # Función para obtener el top de libros más vendidos
 def obtener_top_libros_vendidos():
     try:
-        # Obtener todos los pedidos de todos los usuarios
-        todos_pedidos = users_collection.aggregate([
-            {"$unwind": "$pedidos"},
-            {"$unwind": "$pedidos.items"},
+        # Obtener todos los pedidos de la colección 'orders'
+        todos_pedidos = orders_collection.aggregate([
+            {"$unwind": "$items"},
             {"$group": {
-                "_id": "$pedidos.items.libro_id",
-                "total_vendidos": {"$sum": "$pedidos.items.cantidad"}
+                "_id": "$items.libro_id",
+                "total_vendidos": {"$sum": "$items.cantidad"}
             }},
             {"$sort": {"total_vendidos": -1}}
         ])
@@ -751,6 +797,7 @@ def obtener_top_libros_vendidos():
     
     except Exception as e:
         return {"error": str(e)}
+
 
 #-----------------------------------------------------------------------------
 
@@ -934,11 +981,11 @@ def ver_historial_pedidos_endpoint(user_id):
     return jsonify(result)
 
 # Endpoint para actualizar el estado de un pedido
-@app.route('/actualizar_estado_pedido/<string:user_id>', methods=['PUT'])
-def actualizar_estado_pedido_endpoint(user_id):
+@app.route('/actualizar_estado_pedido/<string:pedido_id>', methods=['PUT'])
+def actualizar_estado_pedido_endpoint(pedido_id):
     data = request.json
     nuevo_estado = data.get("estado")
-    result = actualizar_estado_pedido(user_id, nuevo_estado)
+    result = actualizar_estado_pedido(pedido_id, nuevo_estado)
     return jsonify(result)
 
 # Endpoint para obtener el historial de pedidos de clientes
