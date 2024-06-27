@@ -17,18 +17,38 @@ export const Books = () => {
   const onSearchSubmit = (event) => {
     event.preventDefault();
     const searchText = event.target.searchText.value;
-    console.log(searchText);
+    fetch(`http://localhost:5000/search`
+      , {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ buscar: searchText }),
+      }
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        setLibros(data);
+      });
   }
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // Aquí puedes acceder al valor seleccionado
     console.log('Genero seleccionado:', selectedGenero);
-    /*fetch(`http://localhost:3000/MediCare/specialty/${selectedEspecialidad}`)
+    fetch(`http://localhost:5000/filtro`
+      , {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ filtro: selectedGenero }),
+      }
+    )
       .then((response) => response.json())
       .then((data) => {
-        setDoctores(data);
-      });*/
+        setLibros(data);
+      });
   };
 
   useEffect(() => {
@@ -41,6 +61,26 @@ export const Books = () => {
 
   const handleVerLibro = (bookID) => {
     navigate(`/book/${bookID}`);
+  }
+
+  const handleAgregarACarrito = (bookID, precio) => {
+    console.log('Agregar a carrito');
+    console.log('ID del libro:', bookID);
+    console.log('ID del usuario:', user.id);
+
+    fetch(`http://localhost:5000/cart`
+      , {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: user.id, libro_id: bookID, cantidad: 1, precio: precio  }),
+      }
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      });
   }
 
   return (
@@ -73,15 +113,15 @@ export const Books = () => {
               className="bg-bg-300 border border-gray-300 text-text-100 block w-full p-2.5 rounded-md"
             >
               <option value="0">Filtrar</option>
-                <option key="1" value="genero">
-                  Género (A-Z)
-                </option>
-                <option key="2" value="precio">
-                  Precio (Menor a Mayor)
-                </option>
-                <option key="3" value="puntuacion">
-                  Puntuación
-                </option>
+              <option key="1" value="genero">
+                Género (A-Z)
+              </option>
+              <option key="2" value="precio">
+                Precio (Menor a Mayor)
+              </option>
+              <option key="3" value="puntuacion">
+                Puntuación
+              </option>
             </select>
             <button
               type="submit"
@@ -124,12 +164,20 @@ export const Books = () => {
                 {libro.precio}
               </h1>
             </div>
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center gap-4">
+
               <button
                 className="bg-primary-100 px-4 py-1 rounded-md my-2 disabled:bg-primary-300 w-full text-text-100 font-bold"
                 onClick={() => handleVerLibro(libro._id)}
               >
                 Ver más
+              </button>
+
+              <button
+                className="bg-green-600 px-4 py-1 rounded-md my-2 disabled:bg-primary-300 w-full text-text-100 font-bold"
+                onClick={() => handleAgregarACarrito(libro._id, libro.precio)}
+              >
+                Comprar
               </button>
             </div>
           </Card>
