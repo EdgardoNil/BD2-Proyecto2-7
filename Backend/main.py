@@ -83,7 +83,7 @@ def obtener_usuario_por_id(user_id):
         # Buscar el usuario en la colección 'users' por su ID
         user = users_collection.find_one(
             {"_id": ObjectId(user_id)},
-            {"nombre": 1,"foto_url": 1}
+            {"nombre": 1,"foto_url": 1, "telefono": 1, "email": 1, "direccion": 1}
         )
         if user:
             # Convertir el ObjectId a string para que sea serializable
@@ -336,6 +336,95 @@ def obtener_book(book_id):
     except Exception as e:
         return {"error": str(e)}
 
+# Función para buscar 
+def buscar_entidad(params):
+    termino_busqueda = params.get('buscar')
+
+    if termino_busqueda:
+        # Buscar en la colección 'authors' por nombre
+        query_authors = {
+            "nombre": {'$regex': termino_busqueda, '$options': 'i'}
+        }
+        try:
+            autores = list(authors_collection.find(query_authors))
+            if autores:
+                for autor in autores:
+                    autor["_id"] = str(autor["_id"])
+                return autores
+        except Exception as e:
+            return {"error": str(e)}
+
+        # Buscar en la colección 'books' por título
+        query_books = {
+            "titulo": {'$regex': termino_busqueda, '$options': 'i'}
+        }
+        try:
+            libros = list(books_collection.find(query_books))
+            if libros:
+                for libro in libros:
+                    libro["_id"] = str(libro["_id"])
+                return libros
+        except Exception as e:
+            return {"error": str(e)}
+
+    # Si no se encontraron resultados en ninguna colección
+    return {"message": "No se encontraron resultados para la búsqueda."}
+
+# Función para filtrar libros por género, precio o puntuación
+def filtrar_libros_por(params):
+    filtro = params.get('filtro')
+
+    if filtro == 'genero':
+        # Filtrar y ordenar libros por género
+        query = {
+            "genero": {"$exists": True}
+        }
+        try:
+            libros = list(books_collection.find(query).sort("titulo", 1))
+            if libros:
+                for libro in libros:
+                    libro["_id"] = str(libro["_id"])
+                return libros
+            else:
+                return {"message": "No se encontraron libros para el filtro de género."}
+        except Exception as e:
+            return {"error": str(e)}
+
+    elif filtro == 'precio':
+        # Filtrar y ordenar libros por precio de menor a mayor
+        query = {
+            "precio": {"$exists": True}
+        }
+        try:
+            libros = list(books_collection.find(query).sort("precio", 1))
+            if libros:
+                for libro in libros:
+                    libro["_id"] = str(libro["_id"])
+                return libros
+            else:
+                return {"message": "No se encontraron libros para el filtro de precio."}
+        except Exception as e:
+            return {"error": str(e)}
+
+    elif filtro == 'puntuacion':
+        # Filtrar y ordenar libros por puntuación de menor a mayor
+        query = {
+            "puntuacion_promedio": {"$exists": True}
+        }
+        try:
+            libros = list(books_collection.find(query).sort("puntuacion_promedio", 1))
+            if libros:
+                for libro in libros:
+                    libro["_id"] = str(libro["_id"])
+                return libros
+            else:
+                return {"message": "No se encontraron libros para el filtro de puntuación."}
+        except Exception as e:
+            return {"error": str(e)}
+
+    else:
+        return {"error": "Filtro no válido. Los filtros válidos son 'genero', 'precio' o 'puntuacion'."}
+
 # Función para obtener el nombre de usuario por su ID
 def obtener_nombre_usuario(user_id):
     try:
@@ -371,7 +460,24 @@ def agregar_resena(book_id, user_id, texto, puntuacion):
         )
 
         if result.modified_count > 0:
-            return {"message": "Reseña agregada correctamente"}
+            # Calcular el promedio de las puntuaciones de las reseñas
+            libro_actualizado = books_collection.find_one({"_id": ObjectId(book_id)})
+            if libro_actualizado and "resenas" in libro_actualizado:
+                resenas = libro_actualizado["resenas"]
+                num_resenas = len(resenas)
+                if num_resenas > 0:
+                    total_puntuaciones = sum(resena["puntuacion"] for resena in resenas)
+                    puntuacion_promedio = total_puntuaciones / num_resenas
+                else:
+                    puntuacion_promedio = 0.0  # Si no hay reseñas, la puntuación promedio es cero
+                
+                # Actualizar la puntuación promedio del libro
+                books_collection.update_one(
+                    {"_id": ObjectId(book_id)},
+                    {"$set": {"puntuacion_promedio": puntuacion_promedio}}
+                )
+
+            return {"message": "Reseña agregada correctamente y puntuación promedio actualizada"}
         else:
             return {"error": "No se pudo agregar la reseña"}
     
@@ -416,6 +522,60 @@ def agregar_libro_al_carrito(user_id, libro_id, cantidad, precio):
             return {"message": "Libro agregado al carrito exitosamente, pero ya no quedan más libros en stock"}
 
         return {"message": "Libro agregado al carrito exitosamente"}
+    except Exception as e:
+        return {"error": str(e)}
+
+# Función para actualizar la cantidad de un libro en el carrito
+def actualizar_cantidad_libro_carrito(user_id, libro_id, cantidad):
+    try:
+        # Obtener el usuario y el libro
+        user = users_collection.find_one({"_id": ObjectId(user_id)})
+        libro = books_collection.find_one({"_id": ObjectId(libro_id)})
+        
+        if not user:
+            return {"error": "Usuario no encontrado"}
+        if not libro:
+            return {"error": "Libro no encontrado"}
+
+        # Verificar si el libro está en el carrito del usuario
+        libro_en_carrito = None
+        for item in user.get("compras", []):
+            if item["libro_id"] == libro_id:
+                libro_en_carrito = item
+                break
+
+        if libro_en_carrito:
+            # Actualizar la cantidad en el carrito
+            nueva_cantidad = libro_en_carrito["cantidad"] + cantidad
+            if nueva_cantidad < 0:
+                return {"error": "Cantidad no puede ser negativa"}
+            
+            # Restar la cantidad en el stock del libro
+            if libro["cantidad_stock"] < cantidad:
+                return {"error": "No hay suficiente stock disponible"}
+
+            books_collection.update_one(
+                {"_id": ObjectId(libro_id)},
+                {"$inc": {"cantidad_stock": -cantidad}}
+            )
+
+            # Actualizar la cantidad en el carrito del usuario
+            users_collection.update_one(
+                {"_id": ObjectId(user_id), "compras.libro_id": libro_id},
+                {"$set": {"compras.$.cantidad": nueva_cantidad}}
+            )
+
+            # Eliminar el libro del carrito si la cantidad es cero
+            if nueva_cantidad == 0:
+                users_collection.update_one(
+                    {"_id": ObjectId(user_id)},
+                    {"$pull": {"compras": {"libro_id": libro_id}}}
+                )
+
+            return {"message": "Cantidad actualizada correctamente"}
+        else:
+            return {"error": "El libro no está en el carrito del usuario"}
+
     except Exception as e:
         return {"error": str(e)}
 
@@ -668,6 +828,21 @@ def get_book(book_id):
     book = obtener_book(book_id)
     return jsonify(book)
 
+# Ruta para buscar entidades (libros o autores)
+@app.route('/search', methods=['POST'])
+def buscar_entidad_endpoint():
+    params = request.json
+    resultado = buscar_entidad(params)
+    return jsonify(resultado)
+
+# Ruta para filtrar libros por género, precio o puntuación
+@app.route('/filtro', methods=['POST'])
+def filtrar_libros_endpoint():
+    params = request.json
+    resultado = filtrar_libros_por(params)
+    return jsonify(resultado)
+
+# Ruta para agregar una reseña a un libro
 @app.route('/books/<string:book_id>/review', methods=['POST'])
 def add_review(book_id):
     data = request.json
@@ -692,7 +867,7 @@ def add_book_to_cart():
     response = agregar_libro_al_carrito(user_id, libro_id, cantidad, precio)
     return jsonify(response)
 
-# Endpoint para actualizar cantidad de libro en el carrito
+# Endpoint para actualizar la cantidad de un libro en el carrito
 @app.route('/cart', methods=['PUT'])
 def update_book_quantity_in_cart():
     data = request.json
@@ -701,6 +876,7 @@ def update_book_quantity_in_cart():
     cantidad = data.get("cantidad")
     response = actualizar_cantidad_libro_carrito(user_id, libro_id, cantidad)
     return jsonify(response)
+
 
 # Endpoint para eliminar libro del carrito
 @app.route('/cart', methods=['DELETE'])
