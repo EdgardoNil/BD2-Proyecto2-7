@@ -9,12 +9,11 @@ import 'react-toastify/dist/ReactToastify.css';
 export const Cart = () => {
   const [cart, setCart] = useState({ compras: [], total_a_pagar: 0 });
   const { user } = useContext(AuthContext);
-  const userId = "667c5d33008e8d2c11e5d497"; // ID quemado para ejemplo
 
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/cart/${userId}`);
+        const response = await fetch(`http://localhost:5000/cart/${user.id}`);
         const data = await response.json();
         setCart(data);
       } catch (error) {
@@ -23,7 +22,7 @@ export const Cart = () => {
       }
     };
     fetchCart();
-  }, [userId]);
+  }, []);
 
   const handleQuantityChange = async (libroId, newQuantity) => {
     try {
@@ -35,7 +34,7 @@ export const Cart = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ user_id: userId, libro_id: libroId, cantidad: quantityDifference }),
+        body: JSON.stringify({ user_id: user.id, libro_id: libroId, cantidad: quantityDifference }),
       });
       const data = await response.json();
       if (data.message) {
@@ -70,7 +69,7 @@ export const Cart = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ user_id: userId, libro_id: libroId }),
+        body: JSON.stringify({ user_id: user.id, libro_id: libroId }),
       });
       const data = await response.json();
       if (data.message) {
@@ -101,7 +100,7 @@ export const Cart = () => {
 
   const handleCheckout = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/checkout/${userId}`, {
+      const response = await fetch(`http://localhost:5000/checkout/${user.id}`, {
         method: "POST",
       });
       const data = await response.json();
