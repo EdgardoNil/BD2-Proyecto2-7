@@ -6,6 +6,8 @@ import { AuthContext } from '../../auth';
 import { ProtectedRoute } from '../../router/ProtectedRoute';
 import { AuthorsAdmin, BooksAdmin, OrdersAdmin, ReportsAdmin } from '../admin';
 import { Authors, Books, Record, Cart, Profile, Author, Book } from '../user';
+import { ModalProvider } from '../admin/context/ModalContext';
+import { ModalProviderBooks } from '../admin/context/ModalContextBooks';
 
 const navigationUser = [
     { name: 'Autores', href: '/authors', current: false },
@@ -43,14 +45,18 @@ export const PageRoutes = {
             path: "/authors-admin",
             element:
                 <ProtectedRoute requiredRole={2}>
-                    <AuthorsAdmin />
+                    <ModalProvider>
+                        <AuthorsAdmin />
+                    </ModalProvider>
                 </ProtectedRoute>
         },
         {
             path: "/books-admin",
             element:
                 <ProtectedRoute requiredRole={2}>
-                    <BooksAdmin />
+                    <ModalProviderBooks>
+                        <BooksAdmin />
+                    </ModalProviderBooks>
                 </ProtectedRoute>
 
         },

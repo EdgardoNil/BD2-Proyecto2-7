@@ -31,21 +31,22 @@ export const LoginPage = () => {
 
     const dataLogin = {
       email: correo,
-      pass: password,
+      password,
     }
 
-    login('Sebastian Martínez', 1, 1);
+    // login('Sebastian Martínez', 2, 1);
 
-    // const respuesta = await loginHelper(dataLogin);
-    // console.log(respuesta);
-    // if (!respuesta || !respuesta.datos) {
+    const respuesta = await loginHelper(dataLogin);
+    console.log(respuesta);
+    if (!respuesta.id || !respuesta.tipo) {
     //   notifyError("Usuario y/o contraseña son incorrectas.");
-    // } else {
+    } else {
+      const tipoUsuario = respuesta.tipo === 'cliente' ? 1 : 2;
     //   const { datos } = respuesta;
     //   const nombreCompleto = `${datos.nombre} ${datos.apellido}`
     //   notifySuccess(`Bienvenido de vuelta ${nombreCompleto}`);
-    //   login(nombreCompleto, datos.id_rol, datos.id_usuario);
-    // }
+      login("nombreCompleto", tipoUsuario, respuesta.id);
+    }
 
     // console.log(correo, password);
 
