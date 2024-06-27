@@ -6,8 +6,7 @@ import { ToastContainer, toast } from 'react-toastify';
 
 import { useForm } from "../../hooks/useForm";
 import { login as loginHelper } from "../helpers";
-import Logo from '../../assets/logo.svg';
-import { Card, Label, Input } from "../../ui/components";
+import { Label } from "../../ui/components";
 
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -25,6 +24,8 @@ export const LoginPage = () => {
   const notifySuccess = (message) => toast.success(message);
   const notifyError = (message) => toast.error(message);
 
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
   const onLogin = async (event) => {
 
     event.preventDefault();
@@ -38,23 +39,21 @@ export const LoginPage = () => {
 
     const respuesta = await loginHelper(dataLogin);
     console.log(respuesta);
-    if (!respuesta.id || !respuesta.tipo) {
+
+    // if()
+    if (respuesta.id && respuesta.tipo) {
     //   notifyError("Usuario y/o contraseña son incorrectas.");
-    } else {
       const tipoUsuario = respuesta.tipo === 'cliente' ? 1 : 2;
-    //   const { datos } = respuesta;
-    //   const nombreCompleto = `${datos.nombre} ${datos.apellido}`
-    //   notifySuccess(`Bienvenido de vuelta ${nombreCompleto}`);
+      notifySuccess(`Bienvenido de vuelta`);
+      await sleep(2000);
       login("nombreCompleto", tipoUsuario, respuesta.id);
+    } else if (respuesta.error){
+      notifyError(respuesta.error);
+    } else {
+      notifyError("Error interno en el servidor");
     }
 
-    // console.log(correo, password);
-
     // login('Sebastian Martínez');
-
-    // navigate(lastPath, {
-    //   replace: true
-    // });
 
   }
 

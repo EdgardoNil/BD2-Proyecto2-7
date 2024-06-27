@@ -18,10 +18,8 @@ export const ModalAddBook = ({ onNewBook }) => {
     const [autorId, setAutorId] = useState(null)
 
     const fetchData = async () => {
-
         const respuesta = await getAuthors();
         setAutores(respuesta);
-
     }
 
     useEffect(() => {
@@ -46,7 +44,8 @@ export const ModalAddBook = ({ onNewBook }) => {
 
         const respuesta = await createBook(dataBook);
         console.log(respuesta);
-        onNewBook(respuesta.book)
+        onNewBook(respuesta.book, respuesta)
+        closeModal();
         
 
         // console.log(dataBook);

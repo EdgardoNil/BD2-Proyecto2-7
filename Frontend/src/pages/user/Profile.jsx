@@ -4,12 +4,14 @@ import { Input } from '../../ui/components/Input';
 import { Label } from '../../ui/components/Label';
 import { AuthContext } from "../../auth";
 import { Card } from '../../ui/components/Card';
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 export const Profile = () => {
   const [perfil, setPerfil] = useState({
     nombre: '',
     apellido: '',
-    email : '',
+    email: '',
     genero: '',
     pass: '',
     telefono: '',
@@ -18,26 +20,25 @@ export const Profile = () => {
     foto: ''
   });
 
+  const [preview, setPreview] = useState(null);
   const { user } = useContext(AuthContext);
-  const userId = "667c88a7501cfbeff33debe7"; // ID quemado para ejemplo
 
   const {
-    nombre,
-    apellido,
     direccion,
+    email,
+    telefono,
     foto,
     onInputChange
   } = useForm({
-    nombre: perfil.nombre,
-    apellido: perfil.apellido,
     direccion: perfil.direccion,
+    email: perfil.email,
+    telefono: perfil.telefono,
     foto: perfil.foto
   });
 
   useEffect(() => {
     const getPerfil = async () => {
       try {
-        //const response = await fetch(`http://localhost:5000/users/${userId}`);
         const response = await fetch(`http://localhost:5000/users/${user.id}`);
         
         if (!response.ok) {
@@ -56,15 +57,22 @@ export const Profile = () => {
   const onEditPerfil = async (event) => {
     event.preventDefault();
 
-    const datos_actualizados = {
-      nombre: nombre || perfil.nombre,
-      apellido: apellido || perfil.apellido,
-      genero: genero || perfil.genero,
-      pass: pass || perfil.pass,
+    const cambios = {
+      telefono: telefono || perfil.telefono,
+      email: email || perfil.email,
       direccion: direccion || perfil.direccion,
-      fecha_nacimiento: fecha_nacimiento || perfil.fecha_nacimiento,
-      foto: foto || perfil.foto
+      foto_base64: foto || perfil.foto
     };
+
+    if (
+      cambios.telefono === perfil.telefono &&
+      cambios.email === perfil.email &&
+      cambios.direccion === perfil.direccion &&
+      (foto === perfil.foto || foto === "")
+    ) {
+      toast.info('No hay cambios');
+      return;
+    }
 
     try {
       const response = await fetch(`http://localhost:5000/users/${user.id}`, {
@@ -72,15 +80,29 @@ export const Profile = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(datos_actualizados),
+        body: JSON.stringify(cambios),
       });
       const data = await response.json();
-      alert('Perfil actualizado con éxito');
+      toast.success('Perfil actualizado con éxito');
     } catch (error) {
       console.error('Error al actualizar el perfil:', error);
-      alert('Error al actualizar el perfil');
+      toast.error('Error al actualizar el perfil');
     }
-    console.log(datos_actualizados);
+    console.log(cambios);
+  };
+
+  const onFileChange = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      const base64String = reader.result.replace("data:image/jpeg;base64,", "").replace("data:image/png;base64,", "");
+      onInputChange({ target: { name: 'foto', value: base64String } });
+      setPreview(reader.result);
+      console.log(base64String);
+    };
+
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -100,7 +122,7 @@ export const Profile = () => {
                         className="form-control"
                         name="nombre"
                         defaultValue={perfil.nombre}
-                        onChange={onInputChange}
+                        disabled
                       />
                     </div>
                   </div>
@@ -111,7 +133,7 @@ export const Profile = () => {
                         type="text"
                         name="apellido"
                         defaultValue={perfil.apellido}
-                        onChange={onInputChange}
+                        disabled
                         className="form-control"
                       />
                     </div>
@@ -125,7 +147,8 @@ export const Profile = () => {
                         className="form-control"
                         type="text"
                         name="email"
-                        defaultValue={perfil.email}  // no editable por ahora
+                        defaultValue={perfil.email}
+                        onChange={onInputChange}
                       />
                     </div>
                   </div>
@@ -138,7 +161,8 @@ export const Profile = () => {
                         className="form-control"
                         type="text"
                         name="telefono"
-                        defaultValue={perfil.telefono}  // no editable por ahora
+                        defaultValue={perfil.telefono}
+                        onChange={onInputChange}
                       />
                     </div>
                   </div>
@@ -157,7 +181,26 @@ export const Profile = () => {
                     </div>
                   </div>
                 </div>
-                
+                <div className="row">
+                  <div className="col-md-6 mb-4">
+                    <div data-mdb-input-init className="form-outline">
+                      <Label className="form-label">Foto</Label>
+                      <Input
+                        className="form-control"
+                        type="file"
+                        name="foto"
+                        onChange={onFileChange}
+                      />
+                      {preview && (
+                        <img
+                          src={preview}
+                          alt="Vista previa"
+                          style={{ width: "150px", height: "150px", objectFit: "cover", marginTop: "10px" }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
                 <div className="row">
                   <div className="col-md-6 mt-4 mb-4">
                     <button
@@ -169,10 +212,11 @@ export const Profile = () => {
                   </div>
                 </div>
               </form>
+              <ToastContainer />
             </Card>
           </div>
         </div>
-      </div >
+      </div>
     </>
   );
 }

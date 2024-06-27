@@ -6,88 +6,62 @@ import { getBooks } from "./helpers";
 import { ModalDeleteBook } from "./components/ModalDeleteBook";
 import { ModalEditBook } from "./components/ModalEditBook";
 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 export const BooksAdmin = () => {
 
   const { openModal, showModalUpdateBook } = useModal();
 
   const [libros, setLibros] = useState([])
 
+  const notifySuccess = (message) => toast.success(message);
+  const notifyError = (message) => toast.error(message);
+
   const fetchData = async () => {
 
     const respuesta = await getBooks();
     setLibros(respuesta);
-    
+
   }
 
   useEffect(() => {
     fetchData();
-  }, [])
+  }, [showModalUpdateBook])
 
-  // const libros = [
-  //   {
-  //     id: 'a',
-  //     titulo: 'Los hornos de hitler',
-  //     imagen: 'https://ss365.liverpool.com.mx/xl/1028844111.jpg',
-  //     precio: 200,
-  //     disponible: true,
-  //     descripcion: 'Una sobreviviente de los campos de concentración de Auschwitz y de Birkenau. La visión de cinco chimeneas arrojando el humo de la carne quemada de centenares de miles de seres humanos, entre ellos los padres y los dos hijos de la escritora. Cómo eran y actuaban los dirigentes de Auschwitz y Belsen; quién fue Joseph Kramer, juzgado como el criminal número uno en el proceso de Luneburg. Olga Lengyel conservó como testimonio de esta experiencia las cicatrices y la marca del cautiverio, pruebas que mantuvieron incólume su espíritu de humanismo. En Los hornos de Hitler la autora narra al mundo civilizado el horror de los campos de exterminio nazis.',
-  //     autor: 'Olga Lengyel',
-  //     genero: 'Novela',
-  //     stock: 5,
-  //     puntuacion: 95,
-  //     anio: 1948,
-  //   },
-  //   {
-  //     id: 'b',
-  //     titulo: 'Los hornos de hitler',
-  //     imagen: 'https://ss365.liverpool.com.mx/xl/1028844111.jpg',
-  //     precio: 200,
-  //     disponible: true,
-  //     descripcion: 'Una sobreviviente de los campos de concentración de Auschwitz y de Birkenau. La visión de cinco chimeneas arrojando el humo de la carne quemada de centenares de miles de seres humanos, entre ellos los padres y los dos hijos de la escritora. Cómo eran y actuaban los dirigentes de Auschwitz y Belsen; quién fue Joseph Kramer, juzgado como el criminal número uno en el proceso de Luneburg. Olga Lengyel conservó como testimonio de esta experiencia las cicatrices y la marca del cautiverio, pruebas que mantuvieron incólume su espíritu de humanismo. En Los hornos de Hitler la autora narra al mundo civilizado el horror de los campos de exterminio nazis.',
-  //     autor: 'Olga Lengyel',
-  //     genero: 'Novela',
-  //     stock: 5,
-  //     puntuacion: 95,
-  //     anio: 1948,
-  //   },
-  //   {
-  //     id: 'c',
-  //     titulo: 'Los hornos de hitler',
-  //     imagen: 'https://ss365.liverpool.com.mx/xl/1028844111.jpg',
-  //     precio: 200,
-  //     disponible: true,
-  //     descripcion: 'Una sobreviviente de los campos de concentración de Auschwitz y de Birkenau. La visión de cinco chimeneas arrojando el humo de la carne quemada de centenares de miles de seres humanos, entre ellos los padres y los dos hijos de la escritora. Cómo eran y actuaban los dirigentes de Auschwitz y Belsen; quién fue Joseph Kramer, juzgado como el criminal número uno en el proceso de Luneburg. Olga Lengyel conservó como testimonio de esta experiencia las cicatrices y la marca del cautiverio, pruebas que mantuvieron incólume su espíritu de humanismo. En Los hornos de Hitler la autora narra al mundo civilizado el horror de los campos de exterminio nazis.',
-  //     autor: 'Olga Lengyel',
-  //     genero: 'Novela',
-  //     stock: 5,
-  //     puntuacion: 95,
-  //     anio: 1948,
-  //   },
-  //   {
-  //     id: 'd',
-  //     titulo: 'Los hornos de hitler',
-  //     imagen: 'https://ss365.liverpool.com.mx/xl/1028844111.jpg',
-  //     precio: 200,
-  //     disponible: false,
-  //     descripcion: 'Una sobreviviente de los campos de concentración de Auschwitz y de Birkenau. La visión de cinco chimeneas arrojando el humo de la carne quemada de centenares de miles de seres humanos, entre ellos los padres y los dos hijos de la escritora. Cómo eran y actuaban los dirigentes de Auschwitz y Belsen; quién fue Joseph Kramer, juzgado como el criminal número uno en el proceso de Luneburg. Olga Lengyel conservó como testimonio de esta experiencia las cicatrices y la marca del cautiverio, pruebas que mantuvieron incólume su espíritu de humanismo. En Los hornos de Hitler la autora narra al mundo civilizado el horror de los campos de exterminio nazis.',
-  //     autor: 'Olga Lengyel',
-  //     genero: 'Novela',
-  //     stock: 5,
-  //     puntuacion: 95,
-  //     anio: 1948,
-  //   },
-  // ]
-
-  const onAddBook = (newBook) => {
+  const onAddBook = (newBook, respuesta) => {
     setLibros([newBook, ...libros]);
+
+    if (respuesta.message) {
+      notifySuccess(respuesta.message);
+    } else if (respuesta.error) {
+      notifyError(respuesta.error);
+    } else {
+      notifyError("Error interno en el servidor");
+    }
   }
 
-  const onDeleteBook = (bookId) => {
+  const onDeleteBook = (bookId, respuesta) => {
     setLibros(libros.filter(libro => libro._id !== bookId));
+
+    if (respuesta.message) {
+      notifySuccess(respuesta.message);
+    } else if (respuesta.error) {
+      notifyError(respuesta.error);
+    } else {
+      notifyError("Error interno en el servidor");
+    }
   }
 
-  const onUpdateBook = (newBook) => {
+  const onUpdateBook = (newBook, respuesta) => {
     setLibros(libros.map(libro => (libro._id === newBook._id ? newBook : libro)));
+    if (respuesta.message) {
+      notifySuccess(respuesta.message);
+    } else if (respuesta.error) {
+      notifyError(respuesta.error);
+    } else {
+      notifyError("Error interno en el servidor");
+    }
   }
 
   return (
@@ -120,20 +94,26 @@ export const BooksAdmin = () => {
           <i className="fa fa-plus"></i>
         </button>
       </div>
-      <ModalAddBook 
-        onNewBook={(value) => onAddBook(value)}
+      <ModalAddBook
+        onNewBook={(value, respuesta) => onAddBook(value, respuesta)}
       />
       <ModalDeleteBook
-        onRemoveBook={(value) => onDeleteBook(value)}
+        onRemoveBook={(value, respuesta) => onDeleteBook(value, respuesta)}
       />
       {
-        showModalUpdateBook ? 
-        <ModalEditBook
-          onEditBook={(value) => onUpdateBook(value)}
-        />
-        
-        : null
+        showModalUpdateBook ?
+          <ModalEditBook
+            onEditBook={(value, respuesta) => onUpdateBook(value, respuesta)}
+          />
+
+          : null
       }
+      <ToastContainer
+        position="bottom-right"
+        autoClose={3000}
+        pauseOnHover
+        theme="colored"
+      />
     </>
   )
 }

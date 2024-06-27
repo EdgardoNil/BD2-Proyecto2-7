@@ -14,6 +14,7 @@ export const ModalSaveClose = ({ onNewAuthor }) => {
     const [foto, setFoto] = useState(null);
     const [foto64, setFoto64] = useState(null);
 
+
     const addAutor = async () => {
         const dataAutor = {
             nombre,
@@ -24,8 +25,9 @@ export const ModalSaveClose = ({ onNewAuthor }) => {
         }
 
         const respuesta = await createAuthor(dataAutor);
-        onNewAuthor(respuesta.author);
-        console.log(respuesta);
+        onNewAuthor(respuesta.author, respuesta);
+        
+        closeModal();
     }
 
     const handleImageChange = (e) => {
@@ -72,7 +74,7 @@ export const ModalSaveClose = ({ onNewAuthor }) => {
                 <>
                     <div className="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
                         <div className="relative w-full my-6 mx-auto max-w-5xl"> {/* Cambiado a max-w-5xl y w-full */}
-                        <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none overflow-y-auto"> {/* Añadido overflow-y-auto */}
+                            <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none overflow-y-auto"> {/* Añadido overflow-y-auto */}
                                 <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
                                     <h3 className="text-3xl font-semibold">Agregar Autor</h3>
                                     <button

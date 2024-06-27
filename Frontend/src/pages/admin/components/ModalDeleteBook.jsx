@@ -12,7 +12,7 @@ export const ModalDeleteBook = ({ onRemoveBook }) => {
 
         const respuesta = await deleteBook(dataBook._id);
         // console.log(respuesta);
-        onRemoveBook(dataBook._id);
+        onRemoveBook(dataBook._id, respuesta);
         closeModalDeleteBook();
     }
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from '../../../hooks/useForm';
 import { Label } from '../../../ui/components';
 import { useModal } from '../context/ModalContextBooks';
-import { deleteBook, getAuthors } from '../helpers';
+import { deleteBook, getAuthors, updateBook } from '../helpers';
 
 export const ModalEditBook = ({ onEditBook }) => {
     const { showModalUpdateBook, closeModalUpdateBook, dataBook } = useModal();
@@ -71,9 +71,23 @@ export const ModalEditBook = ({ onEditBook }) => {
     const onUpdateBook = async () => {
         // console.log(dataBook);
 
-        // const respuesta = await deleteBook(dataBook._id);
-        // console.log(respuesta);
-        onEditBook(dataBook._id);
+        const newBook = {
+            titulo,
+            descripcion,
+            genero,
+            fecha_publicacion,
+            disponibilidad,
+            cantidad_stock,
+            puntuacion_promedio,
+            precio,
+            imagen_url: dataBook.imagen_url,
+        }
+
+        const respuesta = await updateBook(newBook, dataBook._id);
+        console.log(respuesta);
+        onEditBook(dataBook._id, respuesta);
+        // console.log(dataBook._id);
+        // console.log(newBook);
         closeModalUpdateBook();
     }
 

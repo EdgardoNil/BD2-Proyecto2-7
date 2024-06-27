@@ -9,11 +9,11 @@ export const createAuthor = async (data) => {
       },
       body: JSON.stringify(data),
     });
-  
+
     // if (!response.ok) {
     //   throw new Error('Network response was not ok');
     // }
-  
+
     return response.json();
 
   } catch (e) {
@@ -27,11 +27,11 @@ export const createAuthor = async (data) => {
 export const getAuthors = async () => {
   try {
     const response = await fetch(api + '/authors');
-  
+
     // if (!response.ok) {
     //   throw new Error('Network response was not ok');
     // }
-  
+
     return response.json();
 
   } catch (e) {
@@ -43,22 +43,22 @@ export const getAuthors = async () => {
 };
 
 export const deleteAuthor = async (idAuthor) => {
-    try {
-        const response = await fetch(api + `/authors/${idAuthor}`, {
-            method: 'DELETE',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-        });
-        
-        // if (!response.ok) {
-        //     throw new Error('Network response was not ok');
-        // }
-        return response.json();
-    } catch (e) {
-        return {
-            exito: false,
-            e
-        }
+  try {
+    const response = await fetch(api + `/authors/${idAuthor}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // if (!response.ok) {
+    //     throw new Error('Network response was not ok');
+    // }
+    return response.json();
+  } catch (e) {
+    return {
+      exito: false,
+      e
     }
-  };
+  }
+};

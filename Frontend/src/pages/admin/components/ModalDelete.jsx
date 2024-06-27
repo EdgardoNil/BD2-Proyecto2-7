@@ -1,8 +1,6 @@
-import { useState } from 'react';
-import { useForm } from '../../../hooks/useForm';
-import { Label } from '../../../ui/components';
 import { useModal } from '../context/ModalContext';
 import { deleteAuthor } from '../helpers';
+
 
 export const ModalDelete = ({ onRemoveAuthor }) => {
     const { showModalDeleteAuthor, closeModalDeleteAuthor, dataAuthor } = useModal();
@@ -11,8 +9,9 @@ export const ModalDelete = ({ onRemoveAuthor }) => {
         // console.log(dataAuthor);
 
         const respuesta = await deleteAuthor(dataAuthor._id);
-        // console.log(respuesta);
-        onRemoveAuthor(dataAuthor._id);
+        console.log(respuesta);
+        onRemoveAuthor(dataAuthor._id, respuesta);
+        
         closeModalDeleteAuthor();
     }
 
