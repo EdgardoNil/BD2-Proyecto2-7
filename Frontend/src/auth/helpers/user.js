@@ -1,8 +1,8 @@
-const api = 'http://localhost:3000/MediCare';
+const api = 'http://127.0.0.1:5000';
 
 export const createUser = async (data) => {
   try {
-    const response = await fetch(api + '/createUsuario', {
+    const response = await fetch(api + '/users', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -10,9 +10,9 @@ export const createUser = async (data) => {
       body: JSON.stringify(data),
     });
   
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
+    // if (!response.ok) {
+    //   throw new Error('Network response was not ok');
+    // }
   
     return response.json();
 
@@ -25,7 +25,7 @@ export const createUser = async (data) => {
 };
 
 export const login = async (data) => {
-  const response = await fetch(api + '/obtenerUsuario', {
+  const response = await fetch(api + '/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -33,9 +33,9 @@ export const login = async (data) => {
     body: JSON.stringify(data),
   });
 
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
+  // if (!response.ok) {
+  //   throw new Error('Network response was not ok');
+  // }
 
   return response.json();
 };
