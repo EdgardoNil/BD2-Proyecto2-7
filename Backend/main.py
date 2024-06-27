@@ -176,7 +176,10 @@ def crear_autor(data):
                 {"$set": {"foto_url": url_firmada}}
             )
 
-        return {"message": "Autor creado exitosamente", "author_id": inserted_id}
+            author = obtener_autor_por_id(inserted_id)
+            author['_id'] = inserted_id
+
+        return {"message": "Autor creado exitosamente", "author": author}
     except Exception as e:
         return {"error": str(e)}
 
@@ -266,7 +269,10 @@ def agregar_libro(data):
             {"$push": {"libros": book_id}}
         )
 
-        return {"message": "Libro agregado exitosamente", "book_id": book_id}
+        book = obtener_book(book_id)
+        book['_id'] = book_id
+
+        return {"message": "Libro agregado exitosamente", "book": book}
     except Exception as e:
         return {"error": str(e)}
 
@@ -317,7 +323,7 @@ def eliminar_libro(libro_id):
 # Función para obtener todos los libros
 def obtener_books():
     try:
-        books = list(books_collection.find({}, {"_id": 1, "titulo": 1, "autor": 1, "genero": 1, "imagen_url": 1, "precio": 1}))
+        books = list(books_collection.find({}, { "_id": 1, "titulo": 1, "autor": 1, "descripcion": 1, "genero": 1, "fecha_publicacion": 1, "disponibilidad": 1, "cantidad_stock": 1, "puntuacion_promedio": 1, "precio": 1, "imagen_url": 1, "resenas": 1 }))
         for book in books:
             book["_id"] = str(book["_id"])
         return books
