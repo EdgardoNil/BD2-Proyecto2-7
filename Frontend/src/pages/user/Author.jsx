@@ -38,7 +38,7 @@ export const Author = () => {
       <div className='col-span-5'>
         <h1 className='text-2xl font-bold text-center'>Libros</h1>
         <div className='grid grid-cols-5 p-4 gap-4 '>
-          {['Libro 1', 'Libro 2', 'Libro 3'].map((libro, index) => (
+          {autor.libros.map((libro, index) => (
             <Card key={index}>
               <h1 className='text-2xl font-bold text-center'>{libro}</h1>
             </Card>
