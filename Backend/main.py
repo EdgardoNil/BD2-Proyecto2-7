@@ -57,7 +57,8 @@ def crear_usuario(data):
         "fecha_registro": data.get("fecha_registro", ""),
         "role": data.get("role", "cliente"), 
         "password": data.get("password", ""),
-        "compras": data.get("compras", [])
+        "compras": data.get("compras", []),
+        "id_usuario": str(cliente["_id"])
     }
     try:
         # Insertar el nuevo usuario en la colección 'users'
@@ -83,7 +84,7 @@ def obtener_usuario_por_id(user_id):
         # Buscar el usuario en la colección 'users' por su ID
         user = users_collection.find_one(
             {"_id": ObjectId(user_id)},
-            {"nombre": 1,"foto_url": 1, "telefono": 1, "email": 1, "direccion": 1}
+            {"nombre": 1,"apellido":1, "email":1, "telefono":1,"direccion":1,"foto_url": 1}
         )
         if user:
             # Convertir el ObjectId a string para que sea serializable
@@ -713,7 +714,8 @@ def obtener_historial_pedidos_clientes():
                 historial.append({
                     "nombre_cliente": nombre_cliente,
                     "estado_pedido": estado_pedido,
-                    "libros_pedido": libros_pedido
+                    "libros_pedido": libros_pedido,
+                    "id_usuario": str(cliente["_id"]),
                 })
         
         return historial

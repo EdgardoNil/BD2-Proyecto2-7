@@ -3,51 +3,58 @@ import { useForm } from "../../hooks/useForm";
 import { Input } from '../../ui/components/Input';
 import { Label } from '../../ui/components/Label';
 import { AuthContext } from "../../auth";
-import { Card } from '../../ui/components/Card'
+import { Card } from '../../ui/components/Card';
 
 export const Profile = () => {
   const [perfil, setPerfil] = useState({
     nombre: '',
     apellido: '',
+    email : '',
     genero: '',
     pass: '',
+    telefono: '',
     direccion: '',
     fecha_nacimiento: '',
     foto: ''
   });
 
   const { user } = useContext(AuthContext);
+  const userId = "667c88a7501cfbeff33debe7"; // ID quemado para ejemplo
 
   const {
     nombre,
     apellido,
-    genero,
-    pass,
     direccion,
-    fecha_nacimiento,
     foto,
     onInputChange
   } = useForm({
-    nombre: '',
-    apellido: '',
-    genero: '',
-    pass: '',
-    direccion: '',
-    fecha_nacimiento: '',
-    foto: ''
+    nombre: perfil.nombre,
+    apellido: perfil.apellido,
+    direccion: perfil.direccion,
+    foto: perfil.foto
   });
 
   useEffect(() => {
     const getPerfil = async () => {
-      const response = await fetch(`http://localhost:3000/MediCare/userPacient/${user.id}`);
-      const data = await response.json();
-      setPerfil(data);
-      console.log(data);
+      try {
+        //const response = await fetch(`http://localhost:5000/users/${userId}`);
+        const response = await fetch(`http://localhost:5000/users/${user.id}`);
+        
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        setPerfil(data);
+        console.log(data);
+      } catch (error) {
+        console.error('There has been a problem with your fetch operation:', error);
+      }
     };
     getPerfil();
-  }, [user.id]);
+  }, [user]);
 
   const onEditPerfil = async (event) => {
+    event.preventDefault();
 
     const datos_actualizados = {
       nombre: nombre || perfil.nombre,
@@ -60,7 +67,7 @@ export const Profile = () => {
     };
 
     try {
-      const response = await fetch(`http://localhost:3000/MediCare/update/${user.id}`, {
+      const response = await fetch(`http://localhost:5000/users/${user.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -110,29 +117,28 @@ export const Profile = () => {
                     </div>
                   </div>
                 </div>
-                <div className="col-md-6 mb-4">
-                  <div data-mdb-input-init className="form-outline">
-                    <Label className="form-label">Género</Label>
-                    <Input
-                      className="form-control"
-                      type="text"
-                      name="genero"
-                      onChange={onInputChange}
-                      defaultValue={perfil.genero}
-                    />
-
+                <div className="row">
+                  <div className="col-md-6 mb-4">
+                    <div data-mdb-input-init className="form-outline">
+                      <Label className="form-label">Email</Label>
+                      <Input
+                        className="form-control"
+                        type="text"
+                        name="email"
+                        defaultValue={perfil.email}  // no editable por ahora
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-4">
                     <div data-mdb-input-init className="form-outline">
-                      <Label className="form-label">Contraseña</Label>
+                      <Label className="form-label">Teléfono</Label>
                       <Input
                         className="form-control"
-                        type="password"
-                        name="password"
-                        onChange={onInputChange}
-                        defaultValue={perfil.pass}
+                        type="text"
+                        name="telefono"
+                        defaultValue={perfil.telefono}  // no editable por ahora
                       />
                     </div>
                   </div>
@@ -145,41 +151,13 @@ export const Profile = () => {
                         className="form-control"
                         type="text"
                         name="direccion"
-                        onChange={onInputChange}
                         defaultValue={perfil.direccion}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="row">
-                  <div className="col-md-6 mb-4">
-                    <div data-mdb-input-init className="form-outline">
-                      <Label className="form-label">Fecha de cumpleaños</Label>
-                      <Input
-                        className="form-control"
-                        type="date"
-                        name="fecha_nacimiento"
                         onChange={onInputChange}
-                        defaultValue={perfil.fecha_nacimiento.split('T')[0]}
-                      />
-
-                    </div>
-                  </div>
-                </div>
-                <div className="row">
-                  <div className="col-md-6 mb-4">
-                    <div data-mdb-input-init className="form-outline">
-                      <Label className="form-label">Imagen de Perfil</Label>
-                      <Input
-                        className="form-control"
-                        type="text"
-                        name="imagen"
-                        onChange={onInputChange}
-                        defaultValue={perfil.foto}
                       />
                     </div>
                   </div>
                 </div>
+                
                 <div className="row">
                   <div className="col-md-6 mt-4 mb-4">
                     <button
@@ -198,4 +176,3 @@ export const Profile = () => {
     </>
   );
 }
-  
