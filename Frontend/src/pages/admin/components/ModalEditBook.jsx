@@ -76,10 +76,10 @@ export const ModalEditBook = ({ onEditBook }) => {
             descripcion,
             genero,
             fecha_publicacion,
-            disponibilidad,
-            cantidad_stock,
-            puntuacion_promedio,
-            precio,
+            disponibilidad: disponibilidad === 'si' ? true : false,
+            cantidad_stock: cantidad_stock * 1,
+            puntuacion_promedio: puntuacion_promedio * 1,
+            precio: precio * 1,
             imagen_url: dataBook.imagen_url,
         }
 
