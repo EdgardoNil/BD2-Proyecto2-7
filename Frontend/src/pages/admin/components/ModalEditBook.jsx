@@ -61,10 +61,10 @@ export const ModalEditBook = ({ onEditBook }) => {
         fetchData();
         setAutorText(dataBook?.autor)
         setFoto(dataBook?.imagen_url)
-        
-        
+
+
     }, [])
-    
+
 
 
 
@@ -76,7 +76,7 @@ export const ModalEditBook = ({ onEditBook }) => {
             descripcion,
             genero,
             fecha_publicacion,
-            disponibilidad: disponibilidad === 'si' ? true : false,
+            disponibilidad: (disponibilidad === true || disponibilidad === 'si') ? true : false,
             cantidad_stock: cantidad_stock * 1,
             puntuacion_promedio: puntuacion_promedio * 1,
             precio: precio * 1,
@@ -131,7 +131,7 @@ export const ModalEditBook = ({ onEditBook }) => {
                                     </button>
                                 </div>
                                 <div className="relative p-6 flex-auto">
-                                <form className="my-4 text-blueGray-500 text-lg leading-relaxed">
+                                    <form className="my-4 text-blueGray-500 text-lg leading-relaxed">
                                         <div className="flex">
                                             <div className="w-1/3 bg-gray-200 p-4 mr-3">
                                                 <p>Foto del libro</p>
