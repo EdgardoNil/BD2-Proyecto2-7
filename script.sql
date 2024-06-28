@@ -10,7 +10,7 @@ db.createCollection("books")
 db.createCollection("authors")
 
 // Crear colección de autores (order)
-db.createCollection("order")
+db.createCollection("orders")
 
 //Credenciales del admin
 db.users.insertOne({

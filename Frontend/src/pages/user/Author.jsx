@@ -25,7 +25,7 @@ export const Author = () => {
           <img
             src={autor.foto_url}
             alt='Imagen del autor'
-            className='col-span-2  rounded-full justify-center items-center'
+            className='col-span-2 h-60 w-60 rounded-full justify-center items-center'
           />
         </div>
       </div>
@@ -38,12 +38,17 @@ export const Author = () => {
       <div className='col-span-5'>
         <h1 className='text-2xl font-bold text-center'>Libros</h1>
         <div className='grid grid-cols-5 p-4 gap-4 '>
-          {autor.libros.map((libro, index) => (
-            <Card key={index}>
-              <h1 className='text-2xl font-bold text-center'>{libro}</h1>
-            </Card>
-          ))
-          }
+          {autor.libros && autor.libros.length > 0 ? (
+            autor.libros.map((libro, index) => (
+              <Card key={index}>
+                <h1 className='text-2xl font-bold text-center'>{libro.titulo}</h1>
+                <h3 className='text-xl font-bold text-center'>Género: {libro.genero}</h3>
+                <p className='text-md'>{libro.descripcion}</p>
+              </Card>
+            ))
+          ) : (
+            <p className='text-md text-center col-span-5'>No hay reseñas disponibles</p>
+          )}
         </div>
       </div>
     </div>

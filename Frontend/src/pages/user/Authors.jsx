@@ -7,7 +7,7 @@ export const Authors = () => {
   const navigate = useNavigate();
   const [autores, setAutores] = useState([]);
   const { user } = useContext(AuthContext);
-  
+
   useEffect(() => {
     fetch(`http://localhost:5000/authors`)
       .then((response) => response.json())
@@ -30,18 +30,10 @@ export const Authors = () => {
             </h1>
             <br />
             <div className="flex ">
-              
+
               <p className="text-md">
                 {autor.biografia}
               </p>
-            </div>
-            <div className="col-span-3">
-              <label className="text-md font-bold mr-2">Libros:</label>
-              <ul className="text-md">
-                {autor.libros.map((libro, index) => (
-                  <li key={index}>{libro}</li>
-                ))}
-              </ul>
             </div>
             <div className="flex flex-col justify-center items-center mt-3 mb-3">
               <img
