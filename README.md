@@ -329,3 +329,98 @@ ___
 **Método:** `GET`  
 **Descripción:** Devuelve el top de libros más vendidos basado en las ventas registradas.
 ___
+
+# Rutas creadas en para el manejo del Frontend
+
+La aplicacion cuanta con roles de usuario que son:
+
+ - usuario
+ - administrador
+
+Para poder manejar cada uno de ellos se trabajo con una estrategia en la cual tenemos que si el usuario que ingresa es usuario tendrá un tipo de **1** mientras que si es un usuario administrador es de **2**.
+
+
+**path:**  "/login"
+**Descripción:** Tiene como objetivo mostrar la vista del login en la cual el usuario podrá ingresar a su cuenta.
+
+![](imagenes/login.jpeg)
+
+**path:**  "/register"
+**Descripción:** Tiene como objetivo mostrar la vista del registro del usuario, en esta ventana el usuario tendra la oportunidad de crear una nueva cuenta. Unicamente se permite el registro de roles usuarios.
+
+![](imagenes/register.jpeg)
+
+## Rutas del administrador
+
+**path:**  "/authors-admin"
+**Descripción:** Tiene como objetivo mostrar la vista de la gestion de los autores. En esta vista el usuario tendra la posibilidad de crear un nuevo autor o de eliminar uno que ya fue creado.
+
+![](imagenes/authors-admin.jpeg)
+
+Modal para agregar un autor
+
+![](imagenes/add-author.jpeg)
+
+Modal para eliminar un autor
+
+![](imagenes/delete-author.jpeg)
+
+**path:**  "/books-admin"
+**Descripción:** Tiene como objetivo mostrar la vista de la gestion de libros. En esta vista el administrador podrá crear un nuevo libro y asignarlo a un autor, ademas podra editar y eliminar un libro existente.
+
+![](imagenes/books-admin.jpeg)
+
+Modal para agregar un libro
+
+![](imagenes/add-book.jpeg)
+
+Modal para editar un libro
+
+![](imagenes/update-book.jpeg)
+
+Modal para eliminar un libro
+
+![](imagenes/delete-book.jpeg)
+
+**path:**  "/orders-admin"
+**Descripción:** Tiene como objetivo mostrar la vista las ordenes que tienen actualmente los clientes y podra gestionar cada una de las ordenes para que puedan llegar a su destino.
+
+![](imagenes/pedidos-admin.jpeg)
+
+**path:**  "/reports-admin"
+**Descripción:** Tiene como objetivo mostrar la vista de los reportes en la cual el administrador podra ver una grafica que mostrara los libros más vendidos.
+
+![](imagenes/reportes.jpeg)
+
+## Rutas del usuario
+
+**path:**  "/authors"
+**Descripción:** En esta vista el usuario que ingreso podra ver el listado de los autores que actualmente estan en el sistema, podra ver la informacion de cada uno de ellos.
+
+![](imagenes/authors-users.jpeg)
+
+**path:**  "/books"
+**Descripción:** En esta vista el usuario que ingreso podra ver el listado de los libros que actualmente estan en el sistema, podra ver la informacion de cada uno de ellos y podra elegir en comprar dicho libro.
+
+![](imagenes/books-users.jpeg)
+
+**path:**  "/record"
+**Descripción:** En esta vista el usuario que ingreso podra ver el historial de sus compras mostrando informacion importante de cada una de sus compras.
+
+![](imagenes/historial-pedidos.jpeg)
+
+**path:**  "/cart"
+**Descripción:** En esta vista el usuario actual podra hacer el checkout de sus compras y procesar el pago. En esta ventana el usuario confirma su compra mostrando el detalle de los libros que compro.
+
+![](imagenes/cart.jpeg)
+
+**path:**  "/my-prfile"
+**Descripción:** En esta vista el usuario actual podra ver los datos de su perfil y actualizar cada uno de ellos exceptuando su email ya que ese es su usuario de inicio.
+
+![](imagenes/perfil.jpeg)
+
+**path:**  "/author/:idAutor"
+**Descripción:** Esta vista es compartida entre ambos roles ya que se encarga de mostrar el detalle de un autor, es una vista donde se despliega toda la informacion del autor.
+
+**path:**  "/book/:idLibro"
+**Descripción:** Esta vista es compartida entre ambos roles ya que se encarga de mostrar el detalle del libro, es una vista donde se despliega toda la informacion del libro.

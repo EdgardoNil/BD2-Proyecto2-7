@@ -140,50 +140,6 @@ export const ModalSaveClose = ({ onNewAuthor }) => {
                                             </div>
 
                                         </div>
-
-
-
-                                        <div className="w-full mt-10">
-                                            <input
-                                                type="text"
-                                                className="w-full bg-gray-200 text-gray-700 p-2 rounded-md mb-4"
-                                                placeholder="Agregar libros..."
-                                                value={search}
-                                                onChange={(e) => {
-                                                    setSearch(e.target.value);
-                                                    setDropdownVisible(true);
-                                                }}
-                                                onFocus={() => setDropdownVisible(true)}
-                                            />
-                                            {dropdownVisible && filteredOptions.length > 0 && (
-                                                <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto">
-                                                    {filteredOptions.map((option, index) => (
-                                                        <li
-                                                            key={index}
-                                                            className="p-2 hover:bg-gray-100 cursor-pointer"
-                                                            onClick={() => handleSelectChanges(option)}
-                                                        >
-                                                            {option}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
-
-                                            <div className="flex flex-wrap gap-2">
-                                                {selectedTags.map((tag, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="flex items-center bg-blue-500 text-white rounded-full px-3 py-1"
-                                                    >
-                                                        <span>{tag}</span>
-                                                        <i
-                                                            className="fa-solid fa-x ml-2 bg-transparent hover:bg-blue-700 text-white font-bold rounded-full focus:outline-none"
-                                                            onClick={() => handleRemoveTag(tag)}
-                                                        ></i>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
                                     </form>
                                 </div>
                                 <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
