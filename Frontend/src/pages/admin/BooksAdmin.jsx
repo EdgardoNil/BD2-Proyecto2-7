@@ -66,7 +66,6 @@ export const BooksAdmin = () => {
 
   return (
     <>
-      <div>BooksAdmin</div>
       <div className="grid grid-cols-1 md:grid-cols-3">
 
         {
