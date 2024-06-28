@@ -60,6 +60,17 @@ export const OrdersAdmin = () => {
             <tr onClick={() => handlleexpandRow(index)} style={{ cursor: 'pointer', borderBottom: '1px solid #ddd' }}>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{`compra ${index + 1}`}</td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{sale.nombre_cliente}</td>
+              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                  {sale.estado_pedido.toLowerCase() == 'en proceso' && (
+                    <button
+                      style={{ marginBottom: '5px', backgroundColor: '#3498db', color: '#fff', border: '1px solid #2980b9', borderRadius: '12px', padding: '8px 16px' }}
+                      className="status-button"
+                      onClick={() => handleChangeStatus("enviado", sale.id_pedido)}
+                    >
+                      Enviado
+                    </button>
+                  )}
+                </td>
             </tr>
             {expandedSale === index && (
               <tr>
@@ -74,8 +85,7 @@ export const OrdersAdmin = () => {
                 </td>
                 <td style={{ border: '1px solid #ddd', padding: '8px' }}>
 
-                  <button style={{ marginBottom: '5px', backgroundColor: '#3498db', color: '#fff', border: '1px solid #2980b9',borderRadius: '12px', // Añadir esta línea para hacer el botón más redondeado
-    padding: '8px 16px' }} className="status-button" onClick={() => handleChangeStatus("enviado", sale.id_pedido)}>Enviado</button>
+                 
                 </td>
               </tr>
             )}
